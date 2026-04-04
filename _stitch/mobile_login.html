@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#ffb59d",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#f8f9fa",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "tertiary-container": "#5c1800",
+                        "on-background": "#191c1d",
+                        "on-surface-variant": "#454652",
+                        "on-primary-container": "#8690ee",
+                        "inverse-surface": "#2e3132",
+                        "primary-fixed": "#e0e0ff",
+                        "surface-container-low": "#f3f4f5",
+                        "primary-fixed-dim": "#bdc2ff",
+                        "surface-dim": "#d9dadb",
+                        "on-secondary-fixed-variant": "#354a53",
+                        "inverse-primary": "#bdc2ff",
+                        "surface": "#f8f9fa",
+                        "on-primary-fixed-variant": "#343d96",
+                        "tertiary-fixed": "#ffdbd0",
+                        "outline": "#767683",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-tertiary-fixed": "#390c00",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-container": "#edeeef",
+                        "on-tertiary-fixed-variant": "#7b2e12",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#380b00",
+                        "secondary-container": "#cfe6f2",
+                        "primary-container": "#1a237e",
+                        "inverse-on-surface": "#f0f1f2",
+                        "secondary-fixed": "#cfe6f2",
+                        "on-secondary-fixed": "#071e27",
+                        "on-primary-fixed": "#000767",
+                        "surface-variant": "#e1e3e4",
+                        "primary": "#000666",
+                        "outline-variant": "#c6c5d4",
+                        "on-secondary-container": "#526772",
+                        "secondary-fixed-dim": "#b4cad6",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#4c616c",
+                        "on-surface": "#191c1d",
+                        "surface-tint": "#4c56af",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f8f9fa",
+                        "on-tertiary-container": "#e17c5a",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Manrope"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3 { font-family: 'Manrope', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #000666 0%, #1a237e 100%);
+        }
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.85);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col items-center justify-center p-6">
+<!-- Suppressing Shared Nav Shells for focused Login Journey per "The Filter" rule -->
+<!-- Main Content Canvas -->
+<main class="w-full max-w-md">
+<!-- Login Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-[0_12px_32px_rgba(25,28,29,0.06)] overflow-hidden">
+<!-- Branding Header -->
+<div class="pt-12 pb-8 px-8 flex flex-col items-center">
+<div class="w-16 h-16 primary-gradient rounded-full flex items-center justify-center mb-6 shadow-sm">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="account_balance">account_balance</span>
+</div>
+<h1 class="text-3xl font-extrabold text-primary tracking-tight mb-1">SARAS</h1>
+<p class="text-on-surface-variant font-label text-sm uppercase tracking-widest">Institutional Portal</p>
+</div>
+<!-- Login Form -->
+<form class="px-8 pb-12 space-y-6">
+<!-- Identifier Field -->
+<div class="space-y-1.5">
+<label class="text-xs font-semibold text-on-surface-variant ml-1" for="identifier">IDENTIFIER</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg transition-colors group-focus-within:text-primary" data-icon="alternate_email">alternate_email</span>
+<input class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-lg py-3.5 pl-10 pr-4 text-on-surface text-sm transition-all placeholder:text-outline-variant" id="identifier" placeholder="University ID or Email" type="text"/>
+</div>
+</div>
+<!-- Role Dropdown -->
+<div class="space-y-1.5">
+<label class="text-xs font-semibold text-on-surface-variant ml-1" for="role">YOUR ROLE</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg" data-icon="badge">badge</span>
+<select class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-lg py-3.5 pl-10 pr-4 text-on-surface text-sm transition-all appearance-none cursor-pointer" id="role">
+<option disabled="" selected="" value="">Select Role</option>
+<option value="student">Student / Candidate</option>
+<option value="faculty">Faculty Member</option>
+<option value="admin">Administrator</option>
+<option value="invigilator">Invigilator</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-1.5">
+<label class="text-xs font-semibold text-on-surface-variant ml-1" for="password">PASSWORD</label>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-lg transition-colors group-focus-within:text-primary" data-icon="lock">lock</span>
+<input class="w-full bg-surface-container-low border-0 border-b-2 border-transparent focus:border-primary focus:ring-0 rounded-lg py-3.5 pl-10 pr-12 text-on-surface text-sm transition-all" id="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-xl" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<!-- Actions -->
+<div class="pt-4 space-y-6">
+<button class="w-full primary-gradient text-on-primary font-semibold py-4 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2" type="submit">
+<span>Login to Dashboard</span>
+<span class="material-symbols-outlined text-lg" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<div class="flex items-center justify-center">
+<a class="text-sm font-medium text-primary hover:text-primary-container underline-offset-4 hover:underline transition-all" href="#">
+                            Forgot Password?
+                        </a>
+</div>
+</div>
+</form>
+<!-- Bottom Context Info -->
+<div class="bg-surface-container px-8 py-6 flex flex-col items-center gap-4">
+<div class="flex items-center gap-2 text-xs text-outline font-medium">
+<span class="material-symbols-outlined text-sm" data-icon="security" data-weight="fill" style="font-variation-settings: 'FILL' 1;">security</span>
+<span>SECURE ACADEMIC GATEWAY</span>
+</div>
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-primary-container shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="translate">translate</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-primary-container shadow-sm">
+<span class="material-symbols-outlined text-sm" data-icon="support_agent">support_agent</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer / Credits -->
+<footer class="mt-12 text-center text-outline text-[11px] uppercase tracking-widest font-semibold px-4 leading-relaxed">
+            © 2024 SARAS Assessment Systems<br/> 
+            Governed by The Institutional Vanguard Standards
+        </footer>
+</main>
+<!-- Background Decorative Elements -->
+<div class="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+<div class="absolute -bottom-24 -left-24 w-96 h-96 bg-primary-container/5 rounded-full blur-3xl"></div>
+</div>
+</body></html>
