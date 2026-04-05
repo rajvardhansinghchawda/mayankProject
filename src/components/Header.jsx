@@ -25,7 +25,16 @@ const Header = () => {
           <span className="text-[10px] uppercase tracking-widest text-slate-500">Student ID: 88291</span>
         </div>
         <button className="material-symbols-outlined text-2xl" id="profile-btn">account_circle</button>
-        <button className="material-symbols-outlined text-2xl" id="logout-btn">logout</button>
+        <button 
+          className="material-symbols-outlined text-2xl hover:text-error transition-colors" 
+          id="logout-btn"
+          onClick={() => {
+            // Clear any session data here if needed
+            navigate('/');
+          }}
+        >
+          logout
+        </button>
       </div>
     </nav>
   );

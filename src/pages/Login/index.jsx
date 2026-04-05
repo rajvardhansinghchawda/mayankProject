@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -9,8 +9,17 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simulate login
-    navigate('/dashboard');
+    // Simulate login and store role
+    localStorage.setItem('userRole', role);
+    
+    // Redirect based on role
+    if (role === 'administrator') {
+      navigate('/admin/dashboard');
+    } else if (role === 'teacher') {
+      navigate('/teacher/dashboard');
+    } else {
+      navigate('/dashboard'); // default to student dashboard
+    }
   };
 
   return (
@@ -108,9 +117,12 @@ const Login = () => {
           </form>
 
           <div className="mt-8 text-center text-sm">
-            <a className="font-semibold text-primary hover:text-primary-container transition-colors inline-flex items-center gap-1 group" href="#">
+            <Link 
+              to="/forgot-password"
+              className="font-semibold text-primary hover:text-primary-container transition-colors inline-flex items-center gap-1 group"
+            >
               Forgot Password?
-            </a>
+            </Link>
           </div>
         </div>
 
