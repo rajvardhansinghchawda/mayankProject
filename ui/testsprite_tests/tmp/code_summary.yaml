@@ -1,0 +1,118 @@
+version: "2"
+type: frontend
+tech_stack:
+  - Javascript
+  - React
+  - Vite
+  - Tailwind CSS
+  - React Router
+routes:
+  - path: /
+    file: src/pages/Login/index.jsx
+    auth_required: false
+    description: User login page
+  - path: /forgot-password
+    file: src/pages/Login/ForgotPassword.jsx
+    auth_required: false
+    description: Forgot password page
+  - path: /dashboard
+    file: src/pages/Dashboard/index.jsx
+    auth_required: true
+    description: Student/Admin dashboard
+  - path: /profile
+    file: src/pages/Profile/index.jsx
+    auth_required: true
+    description: User profile page
+  - path: /tests
+    file: src/pages/Tests/index.jsx
+    auth_required: true
+    description: List of available tests
+  - path: /resources
+    file: src/pages/Resources/index.jsx
+    auth_required: true
+    description: Educational resources
+  - path: /uploads
+    file: src/pages/MyUploads/index.jsx
+    auth_required: true
+    description: User uploads management
+  - path: /management
+    file: src/pages/Management/index.jsx
+    auth_required: true
+    description: System management
+  - path: /settings
+    file: src/pages/Settings/SystemSettings.jsx
+    auth_required: true
+    description: System settings
+  - path: /results/student
+    file: src/pages/Results/StudentResults.jsx
+    auth_required: true
+    description: Student performance results
+  - path: /results/admin
+    file: src/pages/Results/AdminResults.jsx
+    auth_required: true
+    description: Admin overview of results
+  - path: /admin/create-test
+    file: src/pages/AdminWizards/CreateTestWizard.jsx
+    auth_required: true
+    description: Multi-step wizard to create a new test
+  - path: /admin/bulk-upload
+    file: src/pages/AdminWizards/BulkUserUpload.jsx
+    auth_required: true
+    description: Bulk user upload via file
+  - path: /assessments/instructions
+    file: src/pages/Assessments/PreTestInstructions.jsx
+    auth_required: true
+    description: Pre-test instructions and configuration
+  - path: /assessments/active
+    file: src/pages/Assessments/ActiveTest.jsx
+    auth_required: true
+    description: Active test environment with timer and questions
+  - path: /assessments/submitted
+    file: src/pages/Assessments/TestSubmitted.jsx
+    auth_required: true
+    description: Confirmation of test submission
+features:
+  - name: User Authentication
+    description: Login and forgot password functionality
+    files:
+      - src/pages/Login/index.jsx
+      - src/pages/Login/ForgotPassword.jsx
+    entry_route: /
+    user_interactions:
+      - Enter email and password
+      - Click login button
+      - Click forgot password link
+    auth_required: false
+  - name: Assessment Lifecycle
+    description: Taking a test from instructions to submission
+    files:
+      - src/pages/Assessments/PreTestInstructions.jsx
+      - src/pages/Assessments/ActiveTest.jsx
+      - src/pages/Assessments/TestSubmitted.jsx
+    entry_route: /assessments/instructions
+    user_interactions:
+      - Read instructions
+      - Start test
+      - Select answers
+      - Submit test
+    auth_required: true
+  - name: Admin Test Creation
+    description: Creating tests via multi-step wizard
+    files:
+      - src/pages/AdminWizards/CreateTestWizard.jsx
+    entry_route: /admin/create-test
+    user_interactions:
+      - Fill step 1 (Basic info)
+      - Fill step 2 (Questions)
+      - Fill step 3 (Preview & Confirm)
+    auth_required: true
+  - name: Bulk Management
+    description: Uploading users in batches
+    files:
+      - src/pages/AdminWizards/BulkUserUpload.jsx
+    entry_route: /admin/bulk-upload
+    user_interactions:
+      - Drag and drop CSV/Excel file
+      - Click upload
+    auth_required: true
+known_limitations: []
