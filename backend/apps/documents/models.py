@@ -55,9 +55,11 @@ class Document(models.Model):
     page_count = models.IntegerField(default=0)
     # ──────────────────────────────────────────────────────────────────────────
 
-    # Status
+    # Status & Moderation
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING_REVIEW)
     rejection_reason = models.TextField(blank=True)
+    flag_count = models.IntegerField(default=0)
+    is_deleted = models.BooleanField(default=False)
 
     # Statistics
     view_count = models.IntegerField(default=0)

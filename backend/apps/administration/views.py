@@ -19,10 +19,22 @@ class AdminStatsView(views.APIView):
     def get(self, request):
         total_students = User.objects.filter(role=User.Role.STUDENT).count()
         total_teachers = User.objects.filter(role=User.Role.TEACHER).count()
+        total_departments = Department.objects.count()
         
+        total_tests = 0
+        try:
+            from django.apps import apps
+            TestModel = apps.get_model('assessments', 'Test')
+            total_tests = TestModel.objects.count()
+        except LookupError:
+            pass
+            
         stats = {
             'total_students': total_students,
             'total_teachers': total_teachers,
+            'total_departments': total_departments,
+            'total_tests': total_tests,
+            'total_users': total_students + total_teachers
         }
         return Response(stats)
 

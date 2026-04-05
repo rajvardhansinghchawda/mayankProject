@@ -31,13 +31,13 @@ class SecurityHeadersMiddleware:
             response['Cache-Control'] = 'no-store, no-cache, must-revalidate, private, max-age=0'
             response['Content-Disposition'] = 'inline'  # Never attachment/download
             response['X-Content-Type-Options'] = 'nosniff'
-            response['X-Frame-Options'] = 'SAMEORIGIN'
+            response['X-Frame-Options'] = 'ALLOWALL'
             response['Content-Security-Policy'] = (
                 "default-src 'self'; "
                 "script-src 'none'; "
                 "object-src 'none'; "
                 "plugin-types application/pdf; "
-                "frame-ancestors 'self';"
+                "frame-ancestors 'self' http://localhost:5174 http://localhost:5173;"
             )
             response['X-Download-Options'] = 'noopen'
             response['X-Permitted-Cross-Domain-Policies'] = 'none'

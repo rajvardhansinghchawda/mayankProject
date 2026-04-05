@@ -6,19 +6,27 @@ class CanViewDocument(BasePermission):
     """Can user view this document's metadata?"""
     def has_object_permission(self, request, view, obj):
         user = request.user
+        
+        # Get institutional context for the user
+        institution = getattr(user, 'institution', None)
+        if not institution and hasattr(user, 'student_profile'):
+            institution = getattr(user.student_profile.section.department, 'institution', None)
+        elif not institution and hasattr(user, 'teacher_profile'):
+             institution = getattr(user.teacher_profile.department, 'institution', None)
+
+        if not institution:
+            return False
+
+        # Must be same institution
+        if obj.section.department.institution != institution:
+            return False
+
+        # Admin can view everything in their institution
         if user.is_admin:
-            return obj.section.department.institution == user.institution
-        if user.is_teacher:
-            return user.teacher_profile.assignments.filter(
-                section=obj.section, is_active=True
-            ).exists()
-        if user.is_student:
-            return (
-                hasattr(user, 'student_profile') and
-                user.student_profile.section == obj.section and
-                obj.status == 'published'
-            )
-        return False
+            return True
+
+        # Others can only view published documents
+        return obj.status == 'published'
 
 
 class CanUploadDocument(BasePermission):

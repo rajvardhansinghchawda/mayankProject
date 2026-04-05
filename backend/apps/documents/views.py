@@ -20,7 +20,7 @@ from django.http import StreamingHttpResponse
 from django.utils import timezone as django_tz
 from rest_framework import status, generics, filters
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
@@ -70,22 +70,25 @@ class DocumentListView(generics.ListAPIView):
         user = self.request.user
         qs = Document.objects.select_related('uploader', 'section__department')
 
-        if user.is_admin:
-            qs = qs.filter(section__department__institution=user.institution)
-        elif user.is_teacher:
-            # Teacher sees documents in their assigned sections
-            assigned_sections = user.teacher_profile.assignments.filter(
-                is_active=True
-            ).values_list('section_id', flat=True)
-            qs = qs.filter(section_id__in=assigned_sections, status=Document.Status.PUBLISHED)
-        elif user.is_student:
-            # Student sees only documents in their own section
-            section = getattr(user.student_profile, 'section', None)
-            if not section:
-                return Document.objects.none()
-            qs = qs.filter(section=section, status=Document.Status.PUBLISHED)
-        else:
+        # Baseline: All users see published documents from their institution
+        institution = getattr(user, 'institution', None)
+        if not institution and hasattr(user, 'student_profile'):
+            institution = getattr(user.student_profile.section.department, 'institution', None)
+        elif not institution and hasattr(user, 'teacher_profile'):
+             institution = getattr(user.teacher_profile.department, 'institution', None)
+
+        if not institution:
             return Document.objects.none()
+
+        # Everyone sees all published documents in THEIR institution
+        qs = qs.filter(section__department__institution=institution, status=Document.Status.PUBLISHED)
+        
+        # Admins see everything (including pending/rejected) for their institution
+        if user.is_admin:
+             # Reset status filter for admins so they can see pending/rejected too
+             qs = Document.objects.select_related('uploader', 'section__department').filter(
+                 section__department__institution=institution
+             )
 
         return qs
 
@@ -154,7 +157,7 @@ class DocumentServeView(APIView):
     6. Stream watermarked bytes with maximum privacy headers
     7. Watermarked bytes are NEVER stored — discarded after streaming
     """
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     throttle_classes = [DocumentServeThrottle]
 
     def get(self, request, document_id):
@@ -162,7 +165,7 @@ class DocumentServeView(APIView):
 
         # ── Step 1: Validate serve token ──────────────────────────────────────
         if not serve_token:
-            logger.warning(f"Document serve attempt without token: user={request.user.id}, doc={document_id}")
+            logger.warning(f"Document serve attempt without token: doc={document_id}")
             return Response(
                 {'error': 'Serve token required'},
                 status=status.HTTP_403_FORBIDDEN
@@ -175,12 +178,20 @@ class DocumentServeView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # ── Step 2: Verify token belongs to this user + document ──────────────
-        if (str(token_payload.get('user_id')) != str(request.user.id) or
-                str(token_payload.get('document_id')) != str(document_id)):
+        # ── Step 2: Manually identify user from token ─────────────────────────
+        # In an iframe context, standard authentication headers are absent.
+        # We rely on the cryptographically signed serve_token for identity.
+        from apps.users.models import User
+        try:
+            current_user = User.objects.get(id=token_payload.get('user_id'))
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if str(token_payload.get('document_id')) != str(document_id):
             logger.warning(
-                f"Serve token mismatch: token_user={token_payload.get('user_id')}, "
-                f"request_user={request.user.id}, doc={document_id}"
+                f"Serve token mismatch: token_user={current_user.id}, "
+                f"token_doc={token_payload.get('document_id')}, "
+                f"request_doc={document_id}"
             )
             return Response({'error': 'Serve token mismatch'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -196,16 +207,16 @@ class DocumentServeView(APIView):
             return Response({'error': 'Document is not available'}, status=status.HTTP_403_FORBIDDEN)
 
         # ── Step 4: Check section access ─────────────────────────────────────
-        if not self._user_can_access_document(request.user, doc):
-            logger.warning(f"Unauthorized document serve: user={request.user.id}, doc={document_id}")
+        if not self._user_can_access_document(current_user, doc):
+            logger.warning(f"Unauthorized document serve: user={current_user.id}, doc={document_id}")
             return Response({'error': 'Access denied'}, status=status.HTTP_403_FORBIDDEN)
 
         # ── Step 5: Capture view timestamp (this goes INTO the watermark) ─────
         view_timestamp = datetime.now(tz=timezone.utc)
 
         # ── Step 6: Build viewer identity for watermark ───────────────────────
-        viewer_name = request.user.full_name
-        viewer_id = self._get_viewer_id(request.user)
+        viewer_name = current_user.full_name
+        viewer_id = self._get_viewer_id(current_user)
         institution_name = (
             doc.section.department.institution.name
             if doc.section.department.institution
@@ -221,7 +232,7 @@ class DocumentServeView(APIView):
         # ── Step 7: Log the view BEFORE serving (forensic record) ─────────────
         DocumentViewLog.objects.create(
             document=doc,
-            viewer=request.user,
+            viewer=current_user,
             ip_address=getattr(request, 'client_ip', request.META.get('REMOTE_ADDR')),
             user_agent=getattr(request, 'user_agent', '')[:500],
             watermark_text=watermark_text,
@@ -260,11 +271,12 @@ class DocumentServeView(APIView):
         response['Pragma'] = 'no-cache'
         response['Expires'] = '0'
         response['X-Content-Type-Options'] = 'nosniff'
-        response['X-Frame-Options'] = 'SAMEORIGIN'
+        response['X-Frame-Options'] = 'ALLOWALL'  # Let CSP frame-ancestors handle it
         response['X-Download-Options'] = 'noopen'
         response['X-Permitted-Cross-Domain-Policies'] = 'none'
         response['Content-Security-Policy'] = (
-            "default-src 'self'; script-src 'none'; object-src 'none'; frame-ancestors 'self';"
+            "default-src 'self'; script-src 'none'; object-src 'none'; "
+            "frame-ancestors 'self' http://localhost:5174 http://localhost:5173;"
         )
 
         logger.info(
@@ -278,19 +290,17 @@ class DocumentServeView(APIView):
         return response
 
     def _user_can_access_document(self, user, doc) -> bool:
-        """Check if user has section-level access to the document."""
-        if user.is_admin:
-            return doc.section.department.institution == user.institution
-        if user.is_teacher:
-            return user.teacher_profile.assignments.filter(
-                section=doc.section, is_active=True
-            ).exists()
-        if user.is_student:
-            return (
-                hasattr(user, 'student_profile') and
-                user.student_profile.section == doc.section
-            )
-        return False
+        """Check if user has access to the document (must be in the same institution)."""
+        institution = getattr(user, 'institution', None)
+        if not institution and hasattr(user, 'student_profile'):
+            institution = getattr(user.student_profile.section.department, 'institution', None)
+        elif not institution and hasattr(user, 'teacher_profile'):
+             institution = getattr(user.teacher_profile.department, 'institution', None)
+
+        if not institution:
+            return False
+
+        return doc.section.department.institution == institution
 
     def _get_viewer_id(self, user) -> str:
         """Get the unique ID for watermark — roll number or employee ID."""

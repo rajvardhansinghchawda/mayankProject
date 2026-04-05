@@ -111,7 +111,7 @@ class DocumentUploadSerializer(serializers.Serializer):
             file_size_bytes=self._pdf_metadata['size_bytes'],
             page_count=self._pdf_metadata['page_count'],
             original_filename=self._original_filename,
-            status=Document.Status.PENDING_REVIEW,
+            status=Document.Status.PUBLISHED,
         )
 
         logger.info(

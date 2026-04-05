@@ -219,15 +219,25 @@ def me(request):
             'roll_number': profile.roll_number,
             'enrollment_number': profile.enrollment_number,
             'section': str(profile.section) if profile.section else None,
+            'section_id': str(profile.section.id) if profile.section else None,
             'phone': profile.phone,
         }
     elif user.is_teacher and hasattr(user, 'teacher_profile'):
         profile = user.teacher_profile
+        assignments = profile.assignments.all()
         data['profile'] = {
             'employee_id': profile.employee_id,
             'designation': profile.designation,
             'department': str(profile.department) if profile.department else None,
+            'department_id': str(profile.department.id) if profile.department else None,
             'phone': profile.phone,
+            'assignments': [
+                {
+                    'section_id': str(a.section.id),
+                    'section_display': str(a.section),
+                    'subject_name': a.subject_name
+                } for a in assignments
+            ]
         }
     
     return Response({
