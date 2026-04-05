@@ -1,0 +1,53 @@
+# ============================================================
+# SARAS — Python Dependencies
+# ============================================================
+
+# Django core
+Django==4.2.16
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.4.0
+django-environ==0.11.2
+django-filter==24.3
+
+# PostgreSQL
+psycopg2-binary==2.9.9
+
+# Redis & Celery
+redis==5.1.1
+celery==5.4.0
+django-celery-beat==2.7.0
+django-celery-results==2.5.1
+flower==2.0.1
+
+# PDF watermarking (privacy core)
+PyMuPDF==1.24.11
+
+# FastAPI realtime service
+fastapi==0.115.4
+uvicorn[standard]==0.32.1
+websockets==13.1
+python-jose[cryptography]==3.3.0
+httpx==0.27.2
+
+# Image / file handling
+Pillow==10.4.0
+python-magic==0.4.27
+
+# CSV / data processing
+pandas==2.2.3
+openpyxl==3.1.5
+
+# Security
+cryptography==43.0.3
+argon2-cffi==23.1.0
+
+# Utilities
+python-dateutil==2.9.0.post0
+python-decouple==3.8
+whitenoise==6.8.2
+
+# Dev / testing
+pytest==8.3.3
+pytest-django==4.9.0
+factory-boy==3.3.1
