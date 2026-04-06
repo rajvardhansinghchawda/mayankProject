@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 const ManagementHeader = () => {
@@ -8,7 +9,14 @@ const ManagementHeader = () => {
         <p className="text-on-surface-variant font-medium">Control user access, departmental configurations, and system-wide settings.</p>
       </div>
       
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4">
+        <Link 
+          to="/admin/users"
+          className="bg-white text-slate-700 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-sm border border-slate-100 hover:bg-slate-50 transition-all flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-lg">group</span>
+          User Control
+        </Link>
         <Link 
           to="/admin/bulk-upload"
           className="bg-white text-slate-700 px-6 py-3.5 rounded-2xl font-bold text-sm shadow-sm border border-slate-100 hover:bg-slate-50 transition-all flex items-center gap-2"

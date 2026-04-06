@@ -1,9 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ResourcesHeader from './components/ResourcesHeader';
 import ResourceCategories from './components/ResourceCategories';
 import ResourceGrid from './components/ResourceGrid';
+import UploadModal from './components/UploadModal';
+import api from '../../services/api';
 
 const Resources = () => {
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  const fetchDocuments = async () => {
+    try {
+      const response = await api.get('/documents/', {
+        params: { search: searchQuery }
+      });
+      // Handle paginated vs non-paginated response
+      const data = Array.isArray(response.data) ? response.data : (response.data.results || []);
+      setDocuments(data);
+    } catch (err) {
+      console.error("Failed to fetch resources", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchDocuments();
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
   return (
     <div className="max-w-7xl mx-auto p-4 lg:p-8">
       <ResourcesHeader />
@@ -16,11 +46,20 @@ const Resources = () => {
           type="text" 
           placeholder="Search for lecture notes, research papers, or authors..." 
           className="w-full bg-white border-0 rounded-2xl pl-14 pr-6 py-4 shadow-sm focus:ring-2 focus:ring-primary/20 text-base"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 
       <ResourceCategories />
-      <ResourceGrid />
+      
+      {loading ? (
+        <div className="flex justify-center p-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <ResourceGrid documents={documents} />
+      )}
       
       {/* Upload/Request Section */}
       <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -39,12 +78,21 @@ const Resources = () => {
           <h4 className="text-xl font-bold text-primary mb-2">Institutional Contribution</h4>
           <p className="text-slate-500 text-sm mb-6">Contribute your research papers or verified study materials to help fellow students and improve the academic library.</p>
           <div className="flex gap-4">
-            <button className="flex-1 bg-white text-slate-700 px-6 py-3 rounded-xl font-bold text-sm border border-slate-100 hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+            <button 
+              onClick={() => setIsUploadModalOpen(true)}
+              className="flex-1 bg-white text-slate-700 px-6 py-3 rounded-xl font-bold text-sm border border-slate-100 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+            >
               Upload Material <span className="material-symbols-outlined text-sm">upload_file</span>
             </button>
           </div>
         </div>
       </div>
+
+      <UploadModal 
+        isOpen={isUploadModalOpen} 
+        onClose={() => setIsUploadModalOpen(false)} 
+        onUploadSuccess={fetchDocuments}
+      />
     </div>
   );
 };

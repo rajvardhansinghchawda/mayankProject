@@ -1,27 +1,59 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import UploadsHeader from './components/UploadsHeader';
 import UploadStats from './components/UploadStats';
 import UploadList from './components/UploadList';
+import UploadModal from '../Resources/components/UploadModal';
+import api from '../../services/api';
 
 const MyUploads = () => {
+  const [uploads, setUploads] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchMyUploads = async () => {
+    try {
+      const response = await api.get('/documents/my-uploads/');
+      // Handle paginated vs non-paginated response
+      const data = Array.isArray(response.data) ? response.data : (response.data.results || []);
+      setUploads(data);
+    } catch (err) {
+      console.error("Failed to fetch personal uploads", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyUploads();
+  }, []);
+
   return (
     <div className="max-w-7xl mx-auto p-4 lg:p-8">
-      <UploadsHeader />
-      <UploadStats />
+      <UploadsHeader onUploadClick={() => setIsModalOpen(true)} />
+      <UploadStats uploads={uploads} />
       
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-bold text-primary">Recent Submissions</h2>
-        <div className="flex items-center gap-2">
-          <button className="p-2 bg-white rounded-lg shadow-sm text-slate-400 hover:text-primary transition-colors">
-            <span className="material-symbols-outlined text-lg">filter_alt</span>
-          </button>
-          <button className="p-2 bg-white rounded-lg shadow-sm text-slate-400 hover:text-primary transition-colors">
-            <span className="material-symbols-outlined text-lg">sort</span>
-          </button>
-        </div>
       </div>
       
-      <UploadList />
+      {loading ? (
+        <div className="flex justify-center p-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <UploadList uploads={uploads} setUploads={setUploads} />
+      )}
+
+      {isModalOpen && (
+        <UploadModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          onUploadSuccess={() => {
+            setIsModalOpen(false);
+            fetchMyUploads();
+          }}
+        />
+      )}
       
       {/* Policy Reminder */}
       <div className="mt-12 bg-amber-50 rounded-2xl p-6 border border-amber-100 flex items-start gap-4">

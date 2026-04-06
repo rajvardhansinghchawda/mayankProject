@@ -1,24 +1,38 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
-  const [role, setRole] = useState('student');
+  const { login, user, loading: authLoading, error: authError } = useAuth();
+  
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e) => {
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (user) {
+      if (user.role === 'admin') navigate('/admin/dashboard');
+      else if (user.role === 'teacher') navigate('/teacher/dashboard');
+      else navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate login and store role
-    localStorage.setItem('userRole', role);
-    
-    // Redirect based on role
-    if (role === 'administrator') {
-      navigate('/admin/dashboard');
-    } else if (role === 'teacher') {
-      navigate('/teacher/dashboard');
-    } else {
-      navigate('/dashboard'); // default to student dashboard
+    try {
+      const user = await login(identifier, password);
+      
+      // Redirect based on backend role
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else if (user.role === 'teacher') {
+        navigate('/teacher/dashboard');
+      } else {
+        navigate('/dashboard'); // default to student dashboard
+      }
+    } catch (err) {
+      console.error("Login Error:", err);
     }
   };
 
@@ -43,27 +57,14 @@ const Login = () => {
             <p className="text-on-surface-variant text-sm mt-1">Please enter your credentials to access the portal.</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Role Selector */}
-            <div className="space-y-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1" htmlFor="role">User Role</label>
-              <div className="relative">
-                <select 
-                  className="w-full bg-surface-container-low border-0 rounded-lg px-4 py-3.5 text-on-surface focus:ring-2 focus:ring-primary/20 appearance-none transition-all cursor-pointer" 
-                  id="role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                >
-                  <option value="student">Student / Candidate</option>
-                  <option value="teacher">Faculty Member</option>
-                  <option value="administrator">Administrator</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
-                  <span className="material-symbols-outlined text-on-surface-variant" id="role-expand">expand_more</span>
-                </div>
-              </div>
+          {authError && (
+            <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm flex items-start gap-3">
+              <span className="material-symbols-outlined text-red-500 text-[20px]">error</span>
+              <div>{authError}</div>
             </div>
+          )}
 
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email/Roll Input */}
             <div className="space-y-2">
               <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant ml-1" htmlFor="identifier">Email or Roll Number</label>
@@ -107,11 +108,12 @@ const Login = () => {
             {/* Login CTA */}
             <div className="pt-2">
               <button 
-                className="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold py-4 rounded-lg shadow-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2" 
+                className="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold py-4 rounded-lg shadow-md hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed" 
                 type="submit"
+                disabled={authLoading}
               >
-                Login to Dashboard
-                <span className="material-symbols-outlined" id="login-arrow">arrow_forward</span>
+                {authLoading ? 'Authenticating...' : 'Login to Dashboard'}
+                {!authLoading && <span className="material-symbols-outlined" id="login-arrow">arrow_forward</span>}
               </button>
             </div>
           </form>

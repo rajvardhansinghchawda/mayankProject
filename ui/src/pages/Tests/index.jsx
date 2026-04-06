@@ -1,14 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import TestsHeader from './components/TestsHeader';
 import TestFilters from './components/TestFilters';
 import TestGrid from './components/TestGrid';
+import api from '../../services/api';
 
 const Tests = () => {
+  const [tests, setTests] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTests = async () => {
+      try {
+        const response = await api.get('/assessments/tests/');
+        setTests(response.data);
+      } catch (err) {
+        console.error("Failed to fetch tests", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTests();
+  }, []);
+
   return (
     <div className="max-w-7xl mx-auto p-4 lg:p-8">
       <TestsHeader />
       <TestFilters />
-      <TestGrid />
+      
+      {loading ? (
+        <div className="flex justify-center p-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <TestGrid tests={tests} />
+      )}
       
       {/* Test Guidelines / Footer Section */}
       <div className="mt-16 bg-surface-container-low rounded-2xl p-8 border border-white flex flex-col md:flex-row items-center gap-8 shadow-sm">

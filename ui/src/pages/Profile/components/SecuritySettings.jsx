@@ -1,9 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
+import api from '../../../services/api';
 
 const SecuritySettings = () => {
-  const handleSubmit = (e) => {
+  const [formData, setFormData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [status, setStatus] = useState({ type: '', message: '' });
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Logic for updating password
+    if (formData.newPassword !== formData.confirmPassword) {
+      setStatus({ type: 'error', message: 'New passwords do not match' });
+      return;
+    }
+
+    setLoading(true);
+    setStatus({ type: '', message: '' });
+
+    try {
+      await api.post('/auth/password/change/', {
+        current_password: formData.currentPassword,
+        new_password: formData.newPassword
+      });
+      setStatus({ type: 'success', message: 'Password updated successfully!' });
+      setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || 'Failed to update password';
+      setStatus({ type: 'error', message: errorMsg });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -13,6 +42,14 @@ const SecuritySettings = () => {
         <h2 className="text-xl font-bold text-primary">Security Settings</h2>
       </div>
       
+      {status.message && (
+        <div className={`p-4 rounded-lg mb-6 text-xs font-bold uppercase tracking-widest ${
+          status.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+        }`}>
+          {status.message}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block text-xs font-bold text-on-surface-variant mb-2">Current Password</label>
@@ -21,8 +58,10 @@ const SecuritySettings = () => {
               className="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-sm" 
               placeholder="••••••••" 
               type="password"
+              required
+              value={formData.currentPassword}
+              onChange={(e) => setFormData({...formData, currentPassword: e.target.value})}
             />
-            <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 text-sm cursor-pointer hover:text-primary">visibility</span>
           </div>
         </div>
 
@@ -33,6 +72,9 @@ const SecuritySettings = () => {
               className="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-sm" 
               placeholder="Enter new password" 
               type="password"
+              required
+              value={formData.newPassword}
+              onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
             />
           </div>
         </div>
@@ -44,32 +86,20 @@ const SecuritySettings = () => {
               className="w-full bg-surface-container-low border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary/20 transition-all text-sm" 
               placeholder="Repeat new password" 
               type="password"
+              required
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
             />
           </div>
         </div>
 
-        {/* Password Strength Indicator */}
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Security Strength</span>
-            <span className="text-[10px] font-bold text-on-tertiary-fixed-variant uppercase tracking-widest">Moderate</span>
-          </div>
-          <div className="h-1.5 w-full bg-surface-container-low rounded-full overflow-hidden flex">
-            <div className="h-full w-1/3 bg-error rounded-full"></div>
-            <div className="h-full w-1/3 bg-tertiary-fixed-dim mx-0.5 rounded-full"></div>
-            <div className="h-full w-1/3 bg-surface-container-highest opacity-30"></div>
-          </div>
-          <p className="text-[10px] text-on-surface-variant leading-relaxed">
-            Include at least 1 uppercase letter, 1 number, and 1 special character.
-          </p>
-        </div>
-
         <button 
-          className="w-full bg-gradient-to-r from-primary to-primary-container text-on-primary font-bold py-3 rounded-lg hover:shadow-lg active:scale-[0.98] transition-all mt-4 flex items-center justify-center gap-2" 
+          disabled={loading}
+          className={`w-full bg-slate-900 text-white font-bold py-3 rounded-lg hover:shadow-lg active:scale-[0.98] transition-all mt-4 flex items-center justify-center gap-2 ${loading ? 'opacity-50' : ''}`} 
           type="submit"
         >
           <span className="material-symbols-outlined text-sm">verified_user</span>
-          Update Security
+          {loading ? 'Updating...' : 'Update Security'}
         </button>
       </form>
     </section>

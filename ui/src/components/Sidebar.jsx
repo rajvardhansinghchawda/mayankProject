@@ -1,8 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
-  const userRole = localStorage.getItem('userRole') || 'student';
+  const { user, logout } = useAuth();
+  const userRole = user?.role || 'student';
 
   const renderStudentLinks = () => (
     <>
@@ -192,7 +194,7 @@ const Sidebar = () => {
       <div className="space-y-1">
         {userRole === 'student' && renderStudentLinks()}
         {userRole === 'teacher' && renderTeacherLinks()}
-        {userRole === 'administrator' && renderAdminLinks()}
+        {userRole === 'admin' && renderAdminLinks()}
       </div>
       <div className="mt-auto pb-4 space-y-1">
         <NavLink 
@@ -210,7 +212,7 @@ const Sidebar = () => {
         </NavLink>
         <NavLink 
           to="/"
-          onClick={() => localStorage.removeItem('userRole')}
+          onClick={logout}
           className="text-slate-600 dark:text-slate-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:text-rose-600 rounded-lg transition-all flex items-center gap-3 px-4 py-3"
         >
           <span className="material-symbols-outlined" id="logout-icon">logout</span>

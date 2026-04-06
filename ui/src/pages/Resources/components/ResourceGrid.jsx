@@ -1,76 +1,39 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const resources = [
-  {
-    id: 1,
-    title: "Introduction to Algorithm Complexity",
-    type: "PDF",
-    size: "2.4 MB",
-    category: "Lecture Notes",
-    updated: "2 days ago",
-    author: "Dr. Sarah Smith",
-    color: "text-red-500 bg-red-50"
-  },
-  {
-    id: 2,
-    title: "Operating Systems - System Calls Guide",
-    type: "PDF",
-    size: "1.8 MB",
-    category: "Lecture Notes",
-    updated: "5 days ago",
-    author: "Prof. Michael Chen",
-    color: "text-blue-500 bg-blue-50"
-  },
-  {
-    id: 3,
-    title: "React Hooks Deep Dive - Hands-on Lab",
-    type: "ZIP",
-    size: "15.2 MB",
-    category: "Practice Labs",
-    updated: "1 week ago",
-    author: "Admin Team",
-    color: "text-purple-500 bg-purple-50"
-  },
-  {
-    id: 4,
-    title: "Distributed Systems Research - Vol 4",
-    type: "EPUB",
-    size: "8.1 MB",
-    category: "Research Papers",
-    updated: "Oct 12, 2023",
-    author: "Research Cell",
-    color: "text-green-500 bg-green-50"
-  },
-  {
-    id: 5,
-    title: "Database Management Systems Final Review",
-    type: "PDF",
-    size: "3.2 MB",
-    category: "Previous Papers",
-    updated: "Oct 10, 2023",
-    author: "Dept. Head",
-    color: "text-amber-500 bg-amber-50"
-  },
-  {
-    id: 6,
-    title: "Computer Networks Protocols Cheat Sheet",
-    type: "DOCX",
-    size: "540 KB",
-    category: "Lecture Notes",
-    updated: "Sep 28, 2023",
-    author: "Assistant Prof. Rao",
-    color: "text-indigo-500 bg-indigo-50"
-  }
-];
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 const ResourceCard = ({ res }) => {
+  const navigate = useNavigate();
+  const typeColorMap = {
+    'LECTURE_NOTES': 'text-blue-500 bg-blue-50',
+    'RESEARCH_PAPER': 'text-purple-500 bg-purple-50',
+    'PRACTICE_LAB': 'text-green-500 bg-green-50',
+    'PREVIOUS_PAPER': 'text-amber-500 bg-amber-50'
+  };
+
+  const handleView = () => {
+    navigate(`/utilities/viewer?id=${res.id}`);
+  };
+
   return (
     <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-[0_8px_20px_rgba(25,28,29,0.03)] hover:shadow-[0_15px_35px_rgba(25,28,29,0.07)] transition-all group border border-transparent hover:border-primary/10">
       <div className="flex justify-between items-start mb-6">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-xs ${res.color}`}>
-          {res.type}
+        <div className={`px-3 py-1 rounded-lg flex items-center justify-center font-black text-[10px] tracking-widest ${typeColorMap[res.document_type] || 'text-slate-500 bg-slate-50'}`}>
+          {res.document_type?.replace('_', ' ')}
         </div>
-        <button className="material-symbols-outlined text-slate-300 hover:text-primary transition-colors">download</button>
+        <button 
+          onClick={handleView}
+          className="material-symbols-outlined text-slate-300 hover:text-primary transition-colors"
+        >
+          visibility
+        </button>
       </div>
       
       <h3 className="text-base font-bold text-on-surface mb-2 group-hover:text-primary transition-colors line-clamp-2 min-h-[3rem]">
@@ -79,31 +42,40 @@ const ResourceCard = ({ res }) => {
       
       <div className="flex items-center gap-2 mb-6">
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded">
-          {res.category}
+          {res.subject || 'General'}
         </span>
         <span className="text-[10px] text-slate-300">•</span>
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{res.size}</span>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{formatFileSize(res.file_size_bytes)}</span>
       </div>
       
       <div className="pt-4 border-t border-slate-50 flex items-center gap-3">
         <div className="w-6 h-6 rounded-full bg-surface-container-high overflow-hidden">
           <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-[8px] font-bold text-slate-500 uppercase">
-            {res.author.split(' ').map(n => n[0]).join('')}
+            {res.uploader_name?.split(' ').map(n => n[0]).join('') || 'U'}
           </div>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-bold text-on-surface truncate">{res.author}</p>
-          <p className="text-[9px] text-slate-400 font-medium">Updated {res.updated}</p>
+          <p className="text-[10px] font-bold text-on-surface truncate">{res.uploader_name}</p>
+          <p className="text-[9px] text-slate-400 font-medium">{new Date(res.created_at).toLocaleDateString()}</p>
         </div>
       </div>
     </div>
   );
 };
 
-const ResourceGrid = () => {
+const ResourceGrid = ({ documents }) => {
+  if (!Array.isArray(documents) || documents.length === 0) {
+    return (
+      <div className="bg-white rounded-3xl p-12 text-center border-2 border-dashed border-slate-100">
+        <span className="material-symbols-outlined text-4xl text-slate-200 mb-4">folder_off</span>
+        <p className="text-slate-400 font-medium">No resources found matching your search.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {resources.map(res => (
+      {documents.map(res => (
         <ResourceCard key={res.id} res={res} />
       ))}
     </div>

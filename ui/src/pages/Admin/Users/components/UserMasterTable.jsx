@@ -1,49 +1,71 @@
 import React from 'react';
+import api from '../../../../services/api';
 
-const UserMasterTable = () => {
-  const users = [
-    { name: 'Dr. Sarah Mitchell', id: 'FAC-1029', role: 'Faculty', dept: 'Computer Science', lastLogin: '10 mins ago', status: 'Active' },
-    { name: 'John Doe', id: 'STU-4562', role: 'Student', dept: 'Information Tech', lastLogin: '2 hours ago', status: 'Active' },
-    { name: 'Alice Smith', id: 'FAC-7721', role: 'Faculty', dept: 'Physics', lastLogin: 'Yesterday', status: 'Active' },
-    { name: 'Bob Johnson', id: 'STU-3344', role: 'Student', dept: 'Mathematics', lastLogin: '3 days ago', status: 'Suspended' },
-    { name: 'Charlie Davis', id: 'ADM-0012', role: 'Administrator', dept: 'Institutional Core', lastLogin: 'Online', status: 'Active' },
-    { name: 'Diana Prince', id: 'STU-9912', role: 'Student', dept: 'Mechanical Eng.', lastLogin: '1 week ago', status: 'Active' },
-  ];
-
+const UserMasterTable = ({ users = [], onRefresh }) => {
   const getRoleColor = (role) => {
-    switch (role) {
-      case 'Faculty': return 'bg-amber-50 text-amber-600 border-amber-100';
-      case 'Student': return 'bg-primary/5 text-primary border-primary/10';
-      case 'Administrator': return 'bg-slate-900 text-white border-slate-900';
+    switch (role?.toLowerCase()) {
+      case 'teacher': return 'bg-amber-50 text-amber-600 border-amber-100';
+      case 'student': return 'bg-primary/5 text-primary border-primary/10';
+      case 'admin': return 'bg-slate-900 text-white border-slate-900';
       default: return 'bg-slate-50 text-slate-400 border-slate-100';
     }
   };
 
+  const handleToggleActive = async (userId) => {
+    try {
+      await api.post(`/admin/users/${userId}/toggle-active/`);
+      onRefresh();
+    } catch (err) {
+      console.error("Failed to toggle user status", err);
+      alert("Failed to update user status.");
+    }
+  };
+
+  const handleResetPassword = async (userId) => {
+    if (!window.confirm("Reset this user's password to default? They will be forced to change it on next login.")) return;
+    try {
+      await api.post(`/admin/users/${userId}/reset-password/`);
+      alert("Password has been reset to default.");
+    } catch (err) {
+      console.error("Failed to reset password", err);
+      alert("Failed to reset password.");
+    }
+  };
+
+  if (users.length === 0) {
+    return (
+      <div className="bg-white rounded-[40px] p-20 text-center border border-slate-50 shadow-sm font-body">
+        <span className="material-symbols-outlined text-6xl text-slate-200 mb-4">person_off</span>
+        <h3 className="text-xl font-black text-slate-300 uppercase tracking-widest">No Users Found</h3>
+        <p className="text-slate-400 mt-2 font-medium">Try adjusting your search or filters.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white rounded-[40px] p-8 lg:p-10 shadow-sm border border-slate-50 transition-all hover:shadow-lg">
+    <div className="bg-white rounded-[40px] p-8 lg:p-10 shadow-sm border border-slate-50 transition-all hover:shadow-lg font-body">
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
             <tr className="bg-slate-50/50">
               <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">User Details</th>
               <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Role</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Department</th>
-              <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Last Login</th>
+              <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Profile ID</th>
               <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
               <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((user, i) => (
-              <tr key={i} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+            {users.map((user) => (
+              <tr key={user.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                 <td className="px-8 py-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-slate-50 border-2 border-white shadow-sm flex items-center justify-center text-primary text-xs font-black">
-                      {user.name.split(' ').map(n => n[0]).join('')}
+                      {user.full_name?.split(' ').map(n => n[0]).join('') || 'U'}
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">{user.name}</h4>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{user.id}</p>
+                      <h4 className="text-sm font-bold text-on-surface group-hover:text-primary transition-colors">{user.full_name}</h4>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter">{user.email}</p>
                     </div>
                   </div>
                 </td>
@@ -52,21 +74,34 @@ const UserMasterTable = () => {
                     {user.role}
                   </span>
                 </td>
-                <td className="px-8 py-6 text-xs font-semibold text-slate-500 uppercase tracking-tight">{user.dept}</td>
-                <td className="px-8 py-6 text-xs text-slate-400 font-bold">{user.lastLogin}</td>
+                <td className="px-8 py-6 text-xs font-black text-slate-500 uppercase tracking-widest">{user.profile_id || 'N/A'}</td>
                 <td className="px-8 py-6">
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${user.status === 'Active' ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                    <span className="text-[10px] font-black uppercase text-on-surface">{user.status}</span>
+                    <div className={`w-2 h-2 rounded-full ${user.is_active ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <span className="text-[10px] font-black uppercase text-on-surface">{user.is_active ? 'Active' : 'Inactive'}</span>
                   </div>
                 </td>
                 <td className="px-8 py-6 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 border border-white flex items-center justify-center hover:bg-primary/5 hover:text-primary transition-all">
-                      <span className="material-symbols-outlined text-sm">edit</span>
+                  <div className="flex items-center justify-end gap-2 text-on-surface">
+                    <button 
+                      onClick={() => handleResetPassword(user.id)}
+                      title="Reset Password"
+                      className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 border border-white flex items-center justify-center hover:bg-amber-50 hover:text-amber-600 transition-all"
+                    >
+                      <span className="material-symbols-outlined text-sm">lock_reset</span>
                     </button>
-                    <button className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 border border-white flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all">
-                      <span className="material-symbols-outlined text-sm">block</span>
+                    <button 
+                      onClick={() => handleToggleActive(user.id)}
+                      title={user.is_active ? "Deactivate User" : "Activate User"}
+                      className={`w-10 h-10 rounded-xl border border-white flex items-center justify-center transition-all ${
+                        user.is_active 
+                          ? 'bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500' 
+                          : 'bg-green-50 text-green-600 hover:bg-green-100'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        {user.is_active ? 'block' : 'undo'}
+                      </span>
                     </button>
                   </div>
                 </td>
@@ -74,19 +109,6 @@ const UserMasterTable = () => {
             ))}
           </tbody>
         </table>
-      </div>
-      
-      <div className="mt-8 flex items-center justify-center gap-2">
-        {[1, 2, 3, 4, 5].map(p => (
-          <button 
-            key={p} 
-            className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
-              p === 1 ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'bg-white text-slate-400 border border-slate-50 hover:bg-primary/5'
-            }`}
-          >
-            {p}
-          </button>
-        ))}
       </div>
     </div>
   );

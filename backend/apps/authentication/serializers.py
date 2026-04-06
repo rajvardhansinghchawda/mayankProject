@@ -49,16 +49,28 @@ class SARASTokenObtainPairSerializer(TokenObtainPairSerializer):
         
         # Add role-specific profile data
         if user.is_student and hasattr(user, 'student_profile'):
+            profile = user.student_profile
             data['user']['profile'] = {
-                'roll_number': user.student_profile.roll_number,
-                'enrollment_number': user.student_profile.enrollment_number,
-                'section': str(user.student_profile.section) if user.student_profile.section else None,
+                'roll_number': profile.roll_number,
+                'enrollment_number': profile.enrollment_number,
+                'section': str(profile.section) if profile.section else None,
+                'section_id': str(profile.section.id) if profile.section else None,
             }
         elif user.is_teacher and hasattr(user, 'teacher_profile'):
+            profile = user.teacher_profile
+            assignments = profile.assignments.all()
             data['user']['profile'] = {
-                'employee_id': user.teacher_profile.employee_id,
-                'designation': user.teacher_profile.designation,
-                'department': str(user.teacher_profile.department) if user.teacher_profile.department else None,
+                'employee_id': profile.employee_id,
+                'designation': profile.designation,
+                'department': str(profile.department) if profile.department else None,
+                'department_id': str(profile.department.id) if profile.department else None,
+                'assignments': [
+                    {
+                        'section_id': str(a.section.id),
+                        'section_display': str(a.section),
+                        'subject_name': a.subject_name
+                    } for a in assignments
+                ]
             }
         
         return data

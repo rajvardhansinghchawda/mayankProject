@@ -1,24 +1,23 @@
 import React from 'react';
 
-const DepartmentStats = () => {
-  const stats = [
-    { label: 'Departments', value: '12', icon: 'account_tree', color: 'bg-primary/5 text-primary' },
-    { label: 'Total Faculty', value: '158', icon: 'person', color: 'bg-green-50 text-green-600' },
-    { label: 'Total Students', value: '2.4k', icon: 'groups', color: 'bg-amber-50 text-amber-600' },
-    { label: 'Avg GPA', value: '3.12', icon: 'grade', color: 'bg-red-50 text-red-600' },
+const DepartmentStats = ({ stats }) => {
+  const items = [
+    { label: 'Total Departments', value: stats?.total_departments || 0, icon: 'account_tree', color: 'text-primary' },
+    { label: 'Academic Sections', value: '84', icon: 'grid_view', color: 'text-green-600' },
+    { label: 'Active Faculty', value: stats?.total_teachers || 0, icon: 'groups', color: 'text-purple-600' },
+    { label: 'Total Students', value: stats?.total_students || 0, icon: 'school', color: 'text-amber-600' },
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-      {stats.map((stat, i) => (
-        <div key={i} className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-50 flex items-center gap-5 transition-transform hover:scale-105 duration-300">
-          <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${stat.color}`}>
-            <span className="material-symbols-outlined text-2xl">{stat.icon}</span>
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+      {items.map((stat, i) => (
+        <div key={i} className="bg-slate-50 rounded-[32px] p-8 border border-white shadow-sm hover:shadow-lg transition-all duration-500">
+          <div className="flex items-center justify-between mb-4">
+            <span className={`material-symbols-outlined text-2xl ${stat.color}`}>{stat.icon}</span>
+            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Live Sync</span>
           </div>
-          <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
-            <p className="text-2xl font-black text-on-surface">{stat.value}</p>
-          </div>
+          <h3 className="text-3xl font-black text-on-surface mb-1">{stat.value}</h3>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{stat.label}</p>
         </div>
       ))}
     </div>

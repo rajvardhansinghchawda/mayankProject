@@ -1,62 +1,48 @@
 import React from 'react';
+import api from '../../../services/api';
 
-const uploadData = [
-  {
-    id: 1,
-    name: "Final_Year_Project_Proposal_v2.pdf",
-    type: "PDF",
-    size: "1.2 MB",
-    status: "Approved",
-    date: "Oct 12, 2023",
-    category: "Projects"
-  },
-  {
-    id: 2,
-    name: "Data_Structures_Assignment_3.docx",
-    type: "DOCX",
-    size: "840 KB",
-    status: "Pending",
-    date: "Oct 14, 2023",
-    category: "Assignments"
-  },
-  {
-    id: 3,
-    name: "Lab_Report_Networking_Exp5.zip",
-    type: "ZIP",
-    size: "4.5 MB",
-    status: "Approved",
-    date: "Oct 08, 2023",
-    category: "Lab Reports"
-  },
-  {
-    id: 4,
-    name: "Identity_Verification_Document.jpg",
-    type: "JPG",
-    size: "2.1 MB",
-    status: "Rejected",
-    date: "Oct 05, 2023",
-    category: "Institutional"
-  },
-  {
-    id: 5,
-    name: "Seminar_Presentation_Draft.pptx",
-    type: "PPTX",
-    size: "3.8 MB",
-    status: "Pending",
-    date: "Oct 15, 2023",
-    category: "Seminar"
-  }
-];
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
-const UploadList = () => {
+const UploadList = ({ uploads, setUploads }) => {
   const getStatusStyle = (status) => {
     switch (status) {
-      case 'Approved': return 'bg-green-100 text-green-700';
-      case 'Pending': return 'bg-amber-100 text-amber-700';
-      case 'Rejected': return 'bg-red-100 text-red-700';
+      case 'published': return 'bg-green-100 text-green-700';
+      case 'pending_review': return 'bg-amber-100 text-amber-700';
+      case 'rejected': return 'bg-red-100 text-red-700';
+      case 'flagged': return 'bg-orange-100 text-orange-700';
       default: return 'bg-slate-100 text-slate-500';
     }
   };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this document?")) return;
+    
+    try {
+      await api.delete(`/documents/${id}/`);
+      setUploads(prev => prev.filter(doc => doc.id !== id));
+    } catch (err) {
+      console.error("Failed to delete document", err);
+      alert("Failed to delete document. Please try again.");
+    }
+  };
+
+  const safeUploads = Array.isArray(uploads) ? uploads : [];
+
+  if (safeUploads.length === 0) {
+    return (
+      <div className="bg-white rounded-[40px] p-20 text-center border border-slate-50 shadow-sm font-body">
+        <span className="material-symbols-outlined text-6xl text-slate-200 mb-4 scale-150">cloud_off</span>
+        <h3 className="text-xl font-black text-slate-300 uppercase tracking-widest">No Documents Found</h3>
+        <p className="text-slate-400 mt-2 font-medium">You haven't uploaded any academic resources yet.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-surface-container-lowest rounded-3xl shadow-sm border border-slate-50 overflow-hidden">
@@ -73,7 +59,7 @@ const UploadList = () => {
             </tr>
           </thead>
           <tbody>
-            {uploadData.map((doc) => (
+            {safeUploads.map((doc) => (
               <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-8 py-4">
                   <div className="flex items-center gap-4">
@@ -81,23 +67,23 @@ const UploadList = () => {
                       <span className="material-symbols-outlined text-xl">description</span>
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-on-surface truncate max-w-[200px]">{doc.name}</p>
-                      <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">{doc.type}</p>
+                      <p className="text-sm font-bold text-on-surface truncate max-w-[200px]">{doc.title}</p>
+                      <p className="text-[10px] text-slate-400 font-medium uppercase tracking-tight">{doc.document_type?.replace('_', ' ')}</p>
                     </div>
                   </div>
                 </td>
                 <td className="px-8 py-4">
-                  <span className="text-xs font-semibold text-slate-500">{doc.category}</span>
+                  <span className="text-xs font-semibold text-slate-500">{doc.subject || 'General'}</span>
                 </td>
                 <td className="px-8 py-4">
-                  <span className="text-xs font-semibold text-slate-500">{doc.size}</span>
+                  <span className="text-xs font-semibold text-slate-500">{formatFileSize(doc.file_size_bytes)}</span>
                 </td>
                 <td className="px-8 py-4">
-                  <span className="text-xs font-semibold text-slate-500">{doc.date}</span>
+                  <span className="text-xs font-semibold text-slate-500">{new Date(doc.created_at).toLocaleDateString()}</span>
                 </td>
                 <td className="px-8 py-4">
                   <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${getStatusStyle(doc.status)}`}>
-                    {doc.status}
+                    {doc.status?.replace('_', ' ')}
                   </span>
                 </td>
                 <td className="px-8 py-4 text-right">
@@ -105,7 +91,10 @@ const UploadList = () => {
                     <button className="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-primary transition-colors shadow-sm">
                       <span className="material-symbols-outlined text-lg">visibility</span>
                     </button>
-                    <button className="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-error transition-colors shadow-sm">
+                    <button 
+                      onClick={() => handleDelete(doc.id)}
+                      className="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-error transition-colors shadow-sm"
+                    >
                       <span className="material-symbols-outlined text-lg">delete</span>
                     </button>
                   </div>

@@ -1,11 +1,42 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import api from '../../services/api';
 
 const TestSubmitted = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const testId = location.state?.testId;
+  const [attempt, setAttempt] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAttemptDetails = async () => {
+      if (!testId) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await api.get(`/assessments/tests/${testId}/attempt/`);
+        setAttempt(response.data);
+      } catch (err) {
+        console.error("Failed to fetch attempt details", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAttemptDetails();
+  }, [testId]);
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-white z-[200] flex items-center justify-center font-body">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 bg-surface-container-lowest z-[200] flex items-center justify-center p-8 font-body">
+    <div className="fixed inset-0 bg-surface-container-lowest z-[200] flex items-center justify-center p-8 font-body text-on-surface">
       <div className="max-w-xl w-full bg-white rounded-[48px] p-12 lg:p-20 shadow-[0_32px_128px_rgba(25,28,29,0.12)] border border-slate-50 text-center relative overflow-hidden">
         {/* Background Decorative Elements */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
@@ -20,27 +51,31 @@ const TestSubmitted = () => {
             Assessment Successfully Submitted
           </h1>
           <p className="text-on-surface-variant font-medium mb-12 text-lg">
-            Your attempt for <span className="text-primary font-bold">Data Structures Mid-Term</span> has been securely processed and logged in the institutional ledger.
+            Your attempt has been securely processed and logged in the institutional ledger.
           </p>
 
           <div className="bg-slate-50 rounded-3xl p-8 mb-12 border border-white">
             <div className="grid grid-cols-2 gap-8 text-left">
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Time Finished</p>
-                <p className="text-base font-black text-on-surface">11:42 AM IST</p>
+                <p className="text-base font-black text-on-surface">
+                  {attempt?.submitted_at ? new Date(attempt.submitted_at).toLocaleTimeString() : 'Just Now'}
+                </p>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Questions Answered</p>
-                <p className="text-base font-black text-on-surface">42 / 45</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Result Status</p>
+                <p className="text-base font-black text-on-surface uppercase tracking-wider">
+                  {attempt?.status === 'submitted' ? 'Processing' : attempt?.status}
+                </p>
               </div>
               <div>
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Attempt ID</p>
-                <p className="text-base font-black text-on-surface">#ATMT-98234</p>
+                <p className="text-base font-black text-on-surface">#{attempt?.id?.substring(0, 8).toUpperCase() || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">System Status</p>
                 <p className="text-base font-black text-green-600 flex items-center gap-1">
-                  Verifying
+                  Verified
                   <span className="w-1 h-1 bg-green-600 rounded-full animate-ping"></span>
                 </p>
               </div>

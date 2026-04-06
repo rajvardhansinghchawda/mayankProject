@@ -1,12 +1,69 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import api from '../../services/api';
 
 const PreTestInstructions = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const [test, setTest] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [agreed, setAgreed] = useState(false);
+  const [starting, setStarting] = useState(false);
 
-  const handleStartTest = () => {
-    navigate('/assessments/active');
+  useEffect(() => {
+    const fetchTestDetails = async () => {
+      try {
+        const response = await api.get(`/assessments/tests/${id}/`);
+        setTest(response.data);
+      } catch (err) {
+        console.error("Failed to fetch test details", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTestDetails();
+  }, [id]);
+
+  const handleStartTest = async () => {
+    if (!agreed) {
+      alert("Please agree to the instructions before starting.");
+      return;
+    }
+
+    setStarting(true);
+    try {
+      const response = await api.post(`/assessments/tests/${id}/start/`);
+      // Start response contains attempt_id, expires_at, questions
+      // We pass the test ID to the active test page which will fetch/resume the attempt
+      navigate(`/assessments/active/${id}`);
+    } catch (err) {
+      console.error("Failed to start test", err);
+      alert(err.response?.data?.error || "Failed to start assessment. You might have an active attempt already.");
+      
+      // If already started, still try to navigate to resume
+      if (err.response?.status === 400 && err.response?.data?.error === 'Attempt already started') {
+        navigate(`/assessments/active/${id}`);
+      }
+    } finally {
+      setStarting(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[60vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!test) {
+    return (
+      <div className="max-w-4xl mx-auto p-12 text-center">
+        <h2 className="text-2xl font-bold text-slate-400">Assessment not found or unavailable.</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-4 lg:p-12">
@@ -16,27 +73,27 @@ const PreTestInstructions = () => {
             <span className="material-symbols-outlined text-4xl">inventory_2</span>
           </div>
           <div>
-            <h1 className="text-3xl lg:text-4xl font-black text-on-surface tracking-tight">Data Structures Mid-Term</h1>
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mt-1">Assessment Protocol v4.2</p>
+            <h1 className="text-3xl lg:text-4xl font-black text-on-surface tracking-tight">{test.title}</h1>
+            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mt-1">{test.subject_name} • Protocol v4.2</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <div className="bg-slate-50 p-6 rounded-3xl border border-white">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Duration</p>
-            <p className="text-lg font-black text-primary">90 Mins</p>
+            <p className="text-lg font-black text-primary">{test.duration_minutes} Mins</p>
           </div>
           <div className="bg-slate-50 p-6 rounded-3xl border border-white">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Questions</p>
-            <p className="text-lg font-black text-primary">45 Total</p>
+            <p className="text-lg font-black text-primary">{test.questions?.length || 'Loading...'}</p>
           </div>
           <div className="bg-slate-50 p-6 rounded-3xl border border-white">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Max Marks</p>
-            <p className="text-lg font-black text-primary">100 Pts</p>
+            <p className="text-lg font-black text-primary">{test.total_marks} Pts</p>
           </div>
           <div className="bg-slate-50 p-6 rounded-3xl border border-white">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Passing</p>
-            <p className="text-lg font-black text-primary">40% Min</p>
+            <p className="text-lg font-black text-primary">{test.passing_marks || 'NA'} Pts</p>
           </div>
         </div>
 
@@ -71,23 +128,33 @@ const PreTestInstructions = () => {
             Strict Prohibitions
           </h3>
           <p className="text-sm text-on-surface-variant leading-relaxed font-medium">
-            Any attempt to switch tabs, resize the window, or use external devices will trigger an automated proctoring alert. Three alerts will result in immediate disqualification. Ensure your surroundings are quiet and well-lit.
+            Any attempt to switch tabs, resize the window, or use external devices will trigger an automated proctoring alert. You have a limit of {test.tab_switch_threshold || 3} tab switches before a high-risk alert is generated.
           </p>
         </div>
 
         <div className="flex flex-col md:flex-row items-center gap-6">
           <label className="flex items-center gap-4 cursor-pointer group flex-1">
-            <input type="checkbox" className="w-6 h-6 rounded-lg border-2 border-slate-200 text-primary focus:ring-primary/20 transition-all cursor-pointer" />
+            <input 
+              type="checkbox" 
+              className="w-6 h-6 rounded-lg border-2 border-slate-200 text-primary focus:ring-primary/20 transition-all cursor-pointer"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+            />
             <span className="text-sm font-bold text-slate-500 group-hover:text-primary transition-colors">
               I have read and understood all the instructions and institutional guidelines.
             </span>
           </label>
           <button 
+            disabled={starting}
             onClick={handleStartTest}
-            className="w-full md:w-auto bg-primary text-white py-4 px-12 rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+            className="w-full md:w-auto bg-primary text-white py-4 px-12 rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
           >
-            I'm Ready to Start
-            <span className="material-symbols-outlined">play_arrow</span>
+            {starting ? 'Initializing...' : (
+              <>
+                I'm Ready to Start
+                <span className="material-symbols-outlined">play_arrow</span>
+              </>
+            )}
           </button>
         </div>
       </div>

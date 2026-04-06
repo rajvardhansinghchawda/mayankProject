@@ -1,118 +1,77 @@
 version: "2"
 type: frontend
 tech_stack:
-  - Javascript
-  - React
-  - Vite
-  - Tailwind CSS
-  - React Router
+  - javascript
+  - react
+  - tailwindcss
+  - vite
 routes:
   - path: /
     file: src/pages/Login/index.jsx
     auth_required: false
-    description: User login page
-  - path: /forgot-password
-    file: src/pages/Login/ForgotPassword.jsx
-    auth_required: false
-    description: Forgot password page
+    description: Institutional login page
   - path: /dashboard
     file: src/pages/Dashboard/index.jsx
     auth_required: true
-    description: Student/Admin dashboard
-  - path: /profile
-    file: src/pages/Profile/index.jsx
+    description: Student/Generic dashboard
+  - path: /admin/dashboard
+    file: src/pages/Admin/Dashboard/index.jsx
     auth_required: true
-    description: User profile page
-  - path: /tests
-    file: src/pages/Tests/index.jsx
+    description: Administration overview
+  - path: /admin/moderation
+    file: src/pages/Admin/Moderation/index.jsx
     auth_required: true
-    description: List of available tests
-  - path: /resources
-    file: src/pages/Resources/index.jsx
+    description: Document approval queue
+  - path: /admin/users/add
+    file: src/pages/Admin/Users/AddUser.jsx
     auth_required: true
-    description: Educational resources
-  - path: /uploads
-    file: src/pages/MyUploads/index.jsx
+    description: Manual user creation
+  - path: /admin/bulk-upload
+    file: src/pages/Admin/Users/BulkUpload.jsx
     auth_required: true
-    description: User uploads management
-  - path: /management
-    file: src/pages/Management/index.jsx
-    auth_required: true
-    description: System management
-  - path: /settings
-    file: src/pages/Settings/SystemSettings.jsx
-    auth_required: true
-    description: System settings
-  - path: /results/student
-    file: src/pages/Results/StudentResults.jsx
-    auth_required: true
-    description: Student performance results
-  - path: /results/admin
-    file: src/pages/Results/AdminResults.jsx
-    auth_required: true
-    description: Admin overview of results
+    description: CSV bulk user import
   - path: /admin/create-test
     file: src/pages/AdminWizards/CreateTestWizard.jsx
     auth_required: true
-    description: Multi-step wizard to create a new test
-  - path: /admin/bulk-upload
-    file: src/pages/AdminWizards/BulkUserUpload.jsx
-    auth_required: true
-    description: Bulk user upload via file
-  - path: /assessments/instructions
-    file: src/pages/Assessments/PreTestInstructions.jsx
-    auth_required: true
-    description: Pre-test instructions and configuration
-  - path: /assessments/active
-    file: src/pages/Assessments/ActiveTest.jsx
-    auth_required: true
-    description: Active test environment with timer and questions
-  - path: /assessments/submitted
-    file: src/pages/Assessments/TestSubmitted.jsx
-    auth_required: true
-    description: Confirmation of test submission
+    description: Multi-step test creation
 features:
-  - name: User Authentication
-    description: Login and forgot password functionality
+  - name: Admin Login
+    description: Login with admin@mayankcollege.edu
     files:
       - src/pages/Login/index.jsx
-      - src/pages/Login/ForgotPassword.jsx
+      - src/context/AuthContext.jsx
     entry_route: /
     user_interactions:
-      - Enter email and password
-      - Click login button
-      - Click forgot password link
+      - Enter admin email
+      - Enter password
+      - Click Login
+    api_calls:
+      - method: POST
+        endpoint: /api/auth/login/
     auth_required: false
-  - name: Assessment Lifecycle
-    description: Taking a test from instructions to submission
+  - name: Content Moderation
+    description: Approve or reject student uploads
     files:
-      - src/pages/Assessments/PreTestInstructions.jsx
-      - src/pages/Assessments/ActiveTest.jsx
-      - src/pages/Assessments/TestSubmitted.jsx
-    entry_route: /assessments/instructions
+      - src/pages/Admin/Moderation/index.jsx
+      - src/pages/Admin/Moderation/components/ModerationQueue.jsx
+    entry_route: /admin/moderation
     user_interactions:
-      - Read instructions
-      - Start test
-      - Select answers
-      - Submit test
+      - View pending documents
+      - Click Approve button
+    api_calls:
+      - method: POST
+        endpoint: /api/admin/documents/{id}/approve/
     auth_required: true
-  - name: Admin Test Creation
-    description: Creating tests via multi-step wizard
+  - name: Bulk User Upload
+    description: Import many users via CSV
     files:
-      - src/pages/AdminWizards/CreateTestWizard.jsx
-    entry_route: /admin/create-test
-    user_interactions:
-      - Fill step 1 (Basic info)
-      - Fill step 2 (Questions)
-      - Fill step 3 (Preview & Confirm)
-    auth_required: true
-  - name: Bulk Management
-    description: Uploading users in batches
-    files:
-      - src/pages/AdminWizards/BulkUserUpload.jsx
+      - src/pages/Admin/Users/BulkUpload.jsx
     entry_route: /admin/bulk-upload
     user_interactions:
-      - Drag and drop CSV/Excel file
-      - Click upload
+      - Select CSV file
+      - Click Upload
+    api_calls:
+      - method: POST
+        endpoint: /api/admin/users/bulk-upload/
     auth_required: true
 known_limitations: []

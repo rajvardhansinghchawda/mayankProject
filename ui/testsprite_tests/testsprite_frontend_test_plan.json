@@ -1,8 +1,53 @@
 [
   {
     "id": "TC001",
-    "title": "Log in and reach the dashboard",
-    "description": "Verifies a user can sign in from the login page and lands on the dashboard after submitting valid credentials.",
+    "title": "Student can complete an assessment from instructions through submission",
+    "description": "Verifies a student can start a test from instructions, answer questions with the timer running, submit, and see the submission confirmation.",
+    "category": "Assessment Lifecycle (Student)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open assessments instructions"
+      },
+      {
+        "type": "action",
+        "description": "Start the test"
+      },
+      {
+        "type": "action",
+        "description": "Select answers for the visible questions"
+      },
+      {
+        "type": "action",
+        "description": "Submit the test"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the assessment submission confirmation is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Student can log in and reach dashboard",
+    "description": "Verifies a student can sign in with valid credentials and lands on the dashboard.",
     "category": "User Authentication",
     "steps": [
       {
@@ -29,27 +74,10 @@
     "priority": "High"
   },
   {
-    "id": "TC002",
-    "title": "Prevent unauthenticated access to tests list",
-    "description": "Verifies a signed-out user cannot access the tests list and is redirected to the login page.",
-    "category": "Tests List & Start",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /tests"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the user is on the login page"
-      }
-    ],
-    "priority": "High"
-  },
-  {
     "id": "TC003",
-    "title": "Complete an assessment from instructions through submission confirmation",
-    "description": "Verifies a student can start an assessment, answer questions, submit successfully, and see the submission confirmation screen.",
-    "category": "Assessment Lifecycle",
+    "title": "Admin can create a new test via the full wizard and publish it to the tests list",
+    "description": "Verifies an admin can complete all steps of the create-test wizard and the created test appears in the tests list.",
+    "category": "Admin Test Creation (Wizard)",
     "steps": [
       {
         "type": "action",
@@ -69,23 +97,396 @@
       },
       {
         "type": "action",
-        "description": "Click the navigation link to available tests"
+        "description": "Click the navigation option to open the create-test wizard"
       },
       {
         "type": "action",
-        "description": "Select an available test from the list"
+        "description": "Fill the basic test information with valid values"
       },
       {
         "type": "action",
-        "description": "Proceed to the test instructions view"
+        "description": "Continue to the questions step"
+      },
+      {
+        "type": "action",
+        "description": "Add at least one question with valid answer options and mark a correct answer"
+      },
+      {
+        "type": "action",
+        "description": "Continue to the preview and confirm step"
+      },
+      {
+        "type": "action",
+        "description": "Confirm test creation"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open the tests list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the newly created test is listed in the tests list"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Student can view personal results summary and attempts",
+    "description": "Verifies a student can reach the student results page and see their performance summary with an attempts list displayed.",
+    "category": "Results & Performance",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to view student results"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a personal performance summary is displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an attempts list is displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Toggle system lock with confirmation",
+    "description": "Verifies an admin can toggle the system lock after confirming and the new lock state is reflected in the UI.",
+    "category": "Admin Dashboard & Global Actions",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open management"
+      },
+      {
+        "type": "action",
+        "description": "Initiate the system lock toggle"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the system lock change in the confirmation prompt"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the system lock state is updated in the management UI"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Trigger master sync and observe completion UI",
+    "description": "Verifies an admin can trigger a master sync, sees progress feedback, and then sees a success notification when it completes.",
+    "category": "Admin Dashboard & Global Actions",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open management"
+      },
+      {
+        "type": "action",
+        "description": "Trigger the master sync action"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the progress indicator to complete"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a master sync success notification is visible"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Admin can open attempt details from results overview",
+    "description": "Verifies an admin can view the results overview and open a student attempt to see question-level detail.",
+    "category": "Results & Performance",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to view admin results"
+      },
+      {
+        "type": "action",
+        "description": "Open a student result from the overview list"
+      },
+      {
+        "type": "action",
+        "description": "Open an attempt from the student's attempts list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify question-level attempt details are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "View management analytics and audit stream",
+    "description": "Verifies an admin can view global trend charts/metrics and recent audit entries on the management page.",
+    "category": "Admin Dashboard & Global Actions",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open management"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify global trend charts and key metrics are displayed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify recent entries in the audit stream are displayed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Admin can update branding and see it reflected in the UI",
+    "description": "Verifies an admin can change branding settings, save, and see the updated branding reflected in the UI.",
+    "category": "System Settings (Admin)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open system settings"
+      },
+      {
+        "type": "action",
+        "description": "Fill a new university name into the university name field"
+      },
+      {
+        "type": "action",
+        "description": "Select a different valid primary color value"
+      },
+      {
+        "type": "action",
+        "description": "Save the settings changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the updated university name is reflected somewhere in the UI"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Admin security policy persists after refresh",
+    "description": "Verifies an admin can update the max login attempts setting, save, refresh, and still see the updated value persisted.",
+    "category": "System Settings (Admin)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open system settings"
+      },
+      {
+        "type": "action",
+        "description": "Fill 5 into the max login attempts field"
+      },
+      {
+        "type": "action",
+        "description": "Save the settings changes"
+      },
+      {
+        "type": "action",
+        "description": "Press F5"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the max login attempts field still shows 5"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC011",
+    "title": "Upload users from CSV/Excel and review validation report",
+    "description": "Verifies an admin can upload a valid CSV/Excel file and sees a validation report summarizing the upload outcome.",
+    "category": "Bulk User Upload",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open bulk user upload"
+      },
+      {
+        "type": "action",
+        "description": "Upload a valid CSV or Excel file using the page upload control"
+      },
+      {
+        "type": "action",
+        "description": "Submit the upload"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an upload validation report is displayed summarizing successes and failures"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC012",
+    "title": "Required-question validation prevents submission until all required questions are answered",
+    "description": "Verifies attempting to submit with required questions unanswered shows a validation error and submission succeeds after completing remaining required items.",
+    "category": "Assessment Lifecycle (Student)",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open assessments instructions"
       },
       {
         "type": "action",
         "description": "Start the test"
-      },
-      {
-        "type": "action",
-        "description": "Select valid answers for the visible questions"
       },
       {
         "type": "action",
@@ -93,386 +494,28 @@
       },
       {
         "type": "assertion",
-        "description": "Verify a test submission confirmation is displayed"
-      }
-    ],
-    "priority": "High"
-  },
-  {
-    "id": "TC004",
-    "title": "Prevent unauthenticated access to results pages",
-    "description": "Verifies a signed-out user cannot access student or admin results pages and is redirected to the login page.",
-    "category": "Results Viewing",
-    "steps": [
+        "description": "Verify a required-questions validation error is visible"
+      },
       {
         "type": "action",
-        "description": "Navigate to /results/student"
+        "description": "Select answers for all required unanswered questions"
+      },
+      {
+        "type": "action",
+        "description": "Submit the test"
       },
       {
         "type": "assertion",
-        "description": "Verify the user is on the login page"
+        "description": "Verify the assessment submission confirmation is displayed"
       }
     ],
-    "priority": "High"
-  },
-  {
-    "id": "TC005",
-    "title": "Start an assessment from the tests list",
-    "description": "Verifies a signed-in user can browse tests and begin the selected test, landing on the pre-test instructions screen.",
-    "category": "Tests List & Start",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to view tests"
-      },
-      {
-        "type": "action",
-        "description": "Select a test from the list to start"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the user is on the assessment instructions page"
-      }
-    ],
-    "priority": "High"
-  },
-  {
-    "id": "TC006",
-    "title": "Block submission when required questions are unanswered",
-    "description": "Verifies the assessment cannot be submitted with unanswered required questions and a validation error is shown.",
-    "category": "Assessment Lifecycle",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to available tests"
-      },
-      {
-        "type": "action",
-        "description": "Select an available test from the list"
-      },
-      {
-        "type": "action",
-        "description": "Proceed to the test instructions view"
-      },
-      {
-        "type": "action",
-        "description": "Start the test"
-      },
-      {
-        "type": "action",
-        "description": "Attempt to submit the test without answering all required questions"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a submission validation error is visible"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the user remains in the active assessment experience"
-      }
-    ],
-    "priority": "High"
-  },
-  {
-    "id": "TC007",
-    "title": "Open tests list from dashboard",
-    "description": "Verifies a signed-in user can navigate from the dashboard to the tests list to browse available tests.",
-    "category": "Dashboard",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the username field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Wait for the dashboard to finish loading"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to browse tests"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify available tests are displayed"
-      }
-    ],
-    "priority": "High"
-  },
-  {
-    "id": "TC008",
-    "title": "Student can view their results details",
-    "description": "Verifies a signed-in student can open the student results page and see performance details and breakdowns.",
-    "category": "Results Viewing",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to view student results"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify individual performance details are displayed"
-      }
-    ],
-    "priority": "High"
-  },
-  {
-    "id": "TC009",
-    "title": "Create a new test end-to-end and see it available in Tests",
-    "description": "Verifies an admin can complete the Create Test wizard and the newly created test appears in the Tests list and is startable to instructions.",
-    "category": "Admin Test Creation (Create Test Wizard)",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to create a new test"
-      },
-      {
-        "type": "action",
-        "description": "Fill Test E2E Smoke into the test name field"
-      },
-      {
-        "type": "action",
-        "description": "Fill a valid description into the test description field"
-      },
-      {
-        "type": "action",
-        "description": "Proceed to the questions step"
-      },
-      {
-        "type": "action",
-        "description": "Add a question with valid answer choices and mark one correct answer"
-      },
-      {
-        "type": "action",
-        "description": "Proceed to the preview step"
-      },
-      {
-        "type": "action",
-        "description": "Confirm and submit the new test"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to available tests"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a test named Test E2E Smoke appears in the tests list"
-      }
-    ],
-    "priority": "High"
-  },
-  {
-    "id": "TC010",
-    "title": "Open profile from dashboard",
-    "description": "Verifies a signed-in user can use the dashboard entry point to reach their profile details page.",
-    "category": "Dashboard",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the username field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Wait for the dashboard to finish loading"
-      },
-      {
-        "type": "action",
-        "description": "Click the link to view profile details"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the user lands on the profile page"
-      }
-    ],
-    "priority": "High"
-  },
-  {
-    "id": "TC011",
-    "title": "Admin can filter aggregated results by class and date range",
-    "description": "Verifies an admin/teacher can apply class and date-range filters on the admin results page and the aggregated results update accordingly.",
-    "category": "Results Viewing",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to view admin results"
-      },
-      {
-        "type": "action",
-        "description": "Select a class filter value"
-      },
-      {
-        "type": "action",
-        "description": "Select a valid date range"
-      },
-      {
-        "type": "action",
-        "description": "Apply the results filters"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify aggregated results are updated for the selected filters"
-      }
-    ],
-    "priority": "High"
-  },
-  {
-    "id": "TC012",
-    "title": "Navigate from dashboard to tests list",
-    "description": "Verifies a signed-in user can reach the tests list from the dashboard navigation.",
-    "category": "Tests List & Start",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to view tests"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify available tests are displayed"
-      }
-    ],
-    "priority": "High"
+    "priority": "Medium"
   },
   {
     "id": "TC013",
-    "title": "Prevent unauthenticated access to resources",
-    "description": "Verifies a signed-out user cannot access the resources page and is redirected to the login page.",
-    "category": "Resources",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /resources"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the user is on the login page"
-      }
-    ],
-    "priority": "High"
-  },
-  {
-    "id": "TC014",
-    "title": "Admin results can drill into a student context",
-    "description": "Verifies an admin/teacher can drill into a student context from aggregated results and see student-level results details.",
-    "category": "Results Viewing",
+    "title": "Add a new user and see it appear in the master table",
+    "description": "Verifies an admin can add a new user from the user management section and the new user appears in the master user table.",
+    "category": "User Management (Admin)",
     "steps": [
       {
         "type": "action",
@@ -480,11 +523,11 @@
       },
       {
         "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
+        "description": "Fill in the username field with {{LOGIN_USER}}"
       },
       {
         "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
       },
       {
         "type": "action",
@@ -492,32 +535,81 @@
       },
       {
         "type": "action",
-        "description": "Click the navigation link to view admin results"
+        "description": "Click the navigation item to open management"
       },
       {
         "type": "action",
-        "description": "Apply any available filters to show a populated results set"
+        "description": "Open the user management section"
       },
       {
         "type": "action",
-        "description": "Open a student context from the aggregated results list"
+        "description": "Start adding a new user"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"Test User A\" into the name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"test.user.a+{{RUN_ID}}@example.com\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Select a role for the new user"
+      },
+      {
+        "type": "action",
+        "description": "Save the new user"
       },
       {
         "type": "assertion",
-        "description": "Verify student-level performance details are displayed"
+        "description": "Verify a user row for \"test.user.a+{{RUN_ID}}@example.com\" appears in the master user table"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC014",
+    "title": "View available tests list",
+    "description": "Verifies an authenticated user can open the tests page and see a list of available tests or an appropriate empty state.",
+    "category": "Tests & Resources Browsing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the tests page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify available tests are displayed or an empty state is shown"
       }
     ],
     "priority": "Medium"
   },
   {
     "id": "TC015",
-    "title": "Process a valid bulk user file and confirm completion",
-    "description": "Verifies an administrator can upload a valid user file, review the validation summary, confirm processing, and see a processed confirmation state.",
-    "category": "Bulk User Upload",
+    "title": "Edit an existing user's role and see the update in the table",
+    "description": "Verifies an admin can change a user's role and the updated role is reflected in the master user table.",
+    "category": "User Management (Admin)",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /login"
+        "description": "Navigate to /"
       },
       {
         "type": "action",
@@ -533,28 +625,56 @@
       },
       {
         "type": "action",
-        "description": "Click the navigation link to the bulk user upload wizard"
+        "description": "Click the navigation item to open management"
       },
       {
         "type": "action",
-        "description": "Upload a valid CSV/Excel file containing users"
+        "description": "Open the user management section"
       },
       {
         "type": "action",
-        "description": "Confirm the upload after reviewing the validation summary"
+        "description": "Start adding a new user"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"Role Change User\" into the name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill \"role.change+{{RUN_ID}}@example.com\" into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Select an initial role for the new user"
+      },
+      {
+        "type": "action",
+        "description": "Save the new user"
+      },
+      {
+        "type": "action",
+        "description": "Edit the user row for \"role.change+{{RUN_ID}}@example.com\""
+      },
+      {
+        "type": "action",
+        "description": "Select a different role for the user"
+      },
+      {
+        "type": "action",
+        "description": "Save the changes"
       },
       {
         "type": "assertion",
-        "description": "Verify a processed confirmation state is displayed"
+        "description": "Verify the user row for \"role.change+{{RUN_ID}}@example.com\" shows the updated role"
       }
     ],
     "priority": "Medium"
   },
   {
     "id": "TC016",
-    "title": "Upload a file and see it listed in My Uploads",
-    "description": "Verifies a signed-in user can add a new upload and it appears in the uploads list.",
-    "category": "My Uploads",
+    "title": "Update and persist profile changes",
+    "description": "Verifies a user can edit profile information, save it successfully, and see the updated information displayed afterward.",
+    "category": "Profile Management",
     "steps": [
       {
         "type": "action",
@@ -574,24 +694,28 @@
       },
       {
         "type": "action",
-        "description": "Click the navigation link to My Uploads"
+        "description": "Click the navigation link to open the profile page"
       },
       {
         "type": "action",
-        "description": "Upload a new file using the upload control"
+        "description": "Fill a new full name into the name field"
+      },
+      {
+        "type": "action",
+        "description": "Save profile changes"
       },
       {
         "type": "assertion",
-        "description": "Verify the newly added upload appears in the uploads list"
+        "description": "Verify the profile page shows the updated name value"
       }
     ],
     "priority": "Medium"
   },
   {
     "id": "TC017",
-    "title": "Edit and save profile details",
-    "description": "Verifies a signed-in user can edit profile fields, save changes, and see the updated profile details reflected.",
-    "category": "Profile Management",
+    "title": "Upload a file and see it listed with status",
+    "description": "Verifies a user can upload a file from My Uploads and the uploaded item appears in the list with a visible status.",
+    "category": "My Uploads (User)",
     "steps": [
       {
         "type": "action",
@@ -599,7 +723,7 @@
       },
       {
         "type": "action",
-        "description": "Fill in the username field with {{LOGIN_USER}}"
+        "description": "Fill in the email field with {{LOGIN_USER}}"
       },
       {
         "type": "action",
@@ -611,28 +735,32 @@
       },
       {
         "type": "action",
-        "description": "Click the navigation link to the profile page"
+        "description": "Click the navigation link to open the uploads page"
       },
       {
         "type": "action",
-        "description": "Fill a valid new value into an editable profile field"
+        "description": "Click the action to upload a new file"
       },
       {
         "type": "action",
-        "description": "Save profile changes"
+        "description": "Select a small valid file from the file picker"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the upload to finish processing"
       },
       {
         "type": "assertion",
-        "description": "Verify the profile shows the updated details"
+        "description": "Verify the new upload appears in the uploads list with a visible status"
       }
     ],
     "priority": "Medium"
   },
   {
     "id": "TC018",
-    "title": "Browse educational resources list",
-    "description": "Verifies a signed-in user can navigate to resources and browse available materials.",
-    "category": "Resources",
+    "title": "Admin results view supports narrowing results with filters",
+    "description": "Verifies an admin can change visible results using available filtering controls and the list updates accordingly.",
+    "category": "Results & Performance",
     "steps": [
       {
         "type": "action",
@@ -640,11 +768,11 @@
       },
       {
         "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
+        "description": "Fill in the email field with {{LOGIN_USER}}"
       },
       {
         "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
       },
       {
         "type": "action",
@@ -652,20 +780,24 @@
       },
       {
         "type": "action",
-        "description": "Click the navigation link to view resources"
+        "description": "Click the navigation item to view admin results"
+      },
+      {
+        "type": "action",
+        "description": "Select a different value in an available results filter control"
       },
       {
         "type": "assertion",
-        "description": "Verify a list of educational materials is displayed"
+        "description": "Verify the results list updates to reflect the selected filter"
       }
     ],
     "priority": "Medium"
   },
   {
     "id": "TC019",
-    "title": "Uploaded item remains visible after refresh of the uploads view",
-    "description": "Verifies that after adding an upload, returning to the uploads view still shows the upload in the list.",
-    "category": "My Uploads",
+    "title": "Delete an uploaded file from My Uploads",
+    "description": "Verifies a user can delete an existing upload and the file is removed from the uploads list.",
+    "category": "My Uploads (User)",
     "steps": [
       {
         "type": "action",
@@ -685,44 +817,48 @@
       },
       {
         "type": "action",
-        "description": "Click the navigation link to My Uploads"
+        "description": "Click the navigation link to open the uploads page"
       },
       {
         "type": "action",
-        "description": "Upload a new file using the upload control"
+        "description": "Click the action to upload a new file"
       },
       {
         "type": "action",
-        "description": "Click the navigation link to Dashboard"
+        "description": "Select a small valid file from the file picker"
       },
       {
         "type": "action",
-        "description": "Click the navigation link to My Uploads"
+        "description": "Wait for the upload to finish processing"
+      },
+      {
+        "type": "action",
+        "description": "Delete the newly uploaded file from the list"
       },
       {
         "type": "assertion",
-        "description": "Verify an uploads list is displayed and includes the most recently added item"
+        "description": "Verify the deleted file no longer appears in the uploads list"
       }
     ],
     "priority": "Medium"
   },
   {
     "id": "TC020",
-    "title": "Return to tests list from instructions without starting",
-    "description": "Verifies a user can leave the instructions screen and return to the tests list without starting the assessment.",
-    "category": "Tests List & Start",
+    "title": "Browse resources and open a resource detail",
+    "description": "Verifies an authenticated user can browse resources and open a resource detail view successfully.",
+    "category": "Tests & Resources Browsing",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /"
+        "description": "Navigate to /login"
       },
       {
         "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
+        "description": "Fill in the email field with {{LOGIN_USER}}"
       },
       {
         "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
       },
       {
         "type": "action",
@@ -730,32 +866,28 @@
       },
       {
         "type": "action",
-        "description": "Click the navigation link to view tests"
+        "description": "Click the navigation link to open the resources page"
       },
       {
         "type": "action",
-        "description": "Select a test from the list to view its instructions"
-      },
-      {
-        "type": "action",
-        "description": "Click the control to go back to the tests list"
+        "description": "Click a resource item from the list"
       },
       {
         "type": "assertion",
-        "description": "Verify available tests are displayed"
+        "description": "Verify the selected resource detail content is displayed"
       }
     ],
     "priority": "Medium"
   },
   {
     "id": "TC021",
-    "title": "Perform a management action and see updated state reflected in the list",
-    "description": "Verifies an admin can execute a management action on a list entry and the list reflects the updated state.",
-    "category": "Management Area",
+    "title": "Admin cannot save settings with invalid max login attempts",
+    "description": "Verifies the settings form blocks saving when max login attempts is invalid and shows a validation error.",
+    "category": "System Settings (Admin)",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /login"
+        "description": "Navigate to /"
       },
       {
         "type": "action",
@@ -771,28 +903,32 @@
       },
       {
         "type": "action",
-        "description": "Click the navigation link to Management"
+        "description": "Click the navigation item to open system settings"
       },
       {
         "type": "action",
-        "description": "Perform an available management action on a user in the list"
+        "description": "Fill 0 into the max login attempts field"
+      },
+      {
+        "type": "action",
+        "description": "Save the settings changes"
       },
       {
         "type": "assertion",
-        "description": "Verify the list reflects the updated state for that user"
+        "description": "Verify a validation error is visible for the max login attempts field"
       }
     ],
     "priority": "Medium"
   },
   {
     "id": "TC022",
-    "title": "View existing uploads list",
-    "description": "Verifies a signed-in user can access My Uploads and see the uploads list or an empty state when no uploads exist.",
-    "category": "My Uploads",
+    "title": "Admin cannot save settings with missing required branding fields",
+    "description": "Verifies the settings form blocks saving when required branding inputs are empty and shows validation feedback.",
+    "category": "System Settings (Admin)",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /login"
+        "description": "Navigate to /"
       },
       {
         "type": "action",
@@ -808,28 +944,36 @@
       },
       {
         "type": "action",
-        "description": "Click the navigation link to My Uploads"
+        "description": "Click the navigation item to open system settings"
+      },
+      {
+        "type": "action",
+        "description": "Clear the university name field"
+      },
+      {
+        "type": "action",
+        "description": "Save the settings changes"
       },
       {
         "type": "assertion",
-        "description": "Verify an uploads list is displayed or an empty state message is visible"
+        "description": "Verify a required-field validation error is visible for branding settings"
       }
     ],
-    "priority": "Medium"
+    "priority": "Low"
   },
   {
     "id": "TC023",
-    "title": "Retry bulk upload after validation errors",
-    "description": "Verifies an administrator can retry by uploading a corrected file after a malformed upload and then reach the processed confirmation state.",
-    "category": "Bulk User Upload",
+    "title": "Student results page handles empty state",
+    "description": "Verifies that when a student has no attempts, the results page shows an empty state instead of an attempts list.",
+    "category": "Results & Performance",
     "steps": [
       {
         "type": "action",
-        "description": "Navigate to /login"
+        "description": "Navigate to /"
       },
       {
         "type": "action",
-        "description": "Fill in the username field with {{LOGIN_USER}}"
+        "description": "Fill in the email field with {{LOGIN_USER}}"
       },
       {
         "type": "action",
@@ -841,594 +985,19 @@
       },
       {
         "type": "action",
-        "description": "Click the navigation link to the bulk user upload wizard"
-      },
-      {
-        "type": "action",
-        "description": "Upload a malformed CSV/Excel file"
-      },
-      {
-        "type": "action",
-        "description": "Upload a corrected valid CSV/Excel file"
-      },
-      {
-        "type": "action",
-        "description": "Confirm the upload after reviewing the validation summary"
+        "description": "Click the navigation item to view student results"
       },
       {
         "type": "assertion",
-        "description": "Verify a processed confirmation state is displayed"
+        "description": "Verify an empty state message is visible indicating no results are available"
       }
     ],
     "priority": "Low"
   },
   {
     "id": "TC024",
-    "title": "Student results page handles no results yet",
-    "description": "Verifies that when the student has no results to show, the student results page displays an empty state rather than failing to render.",
-    "category": "Results Viewing",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to view student results"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify either results details are displayed or an empty state message is visible"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC025",
-    "title": "Prevent upload when no file is selected",
-    "description": "Verifies the upload flow blocks submission when no file is selected and shows a validation error.",
-    "category": "My Uploads",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to My Uploads"
-      },
-      {
-        "type": "action",
-        "description": "Attempt to submit an upload without selecting a file"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify an upload validation error is visible"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC026",
-    "title": "Open a resource details view when supported",
-    "description": "Verifies a user can open a resource item to view its details within the app when a details view is supported.",
-    "category": "Resources",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to view resources"
-      },
-      {
-        "type": "action",
-        "description": "Open a resource item from the list"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the resource details content is displayed"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC027",
-    "title": "View management tools and user list",
-    "description": "Verifies an authenticated admin user can open the management area and see management tools and a list of users or an empty state.",
-    "category": "Management Area",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to Management"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify management tools are displayed and a user list is shown or an empty state message is visible"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC028",
-    "title": "Resources page supports searching or filtering when available",
-    "description": "Verifies a user can use available search or filter controls on resources to narrow the visible materials.",
-    "category": "Resources",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to view resources"
-      },
-      {
-        "type": "action",
-        "description": "Fill a keyword into the resources search field if present"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the displayed materials reflect the search or filter criteria"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC029",
-    "title": "Prevent progressing in the Create Test wizard when required fields are missing",
-    "description": "Verifies the Create Test wizard blocks moving to the next step when required fields are not provided and shows validation feedback.",
-    "category": "Admin Test Creation (Create Test Wizard)",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to create a new test"
-      },
-      {
-        "type": "action",
-        "description": "Attempt to proceed to the next step without filling required fields"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify required-field validation errors are visible"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the wizard remains on the current step"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC030",
-    "title": "Prevent saving profile with invalid required fields",
-    "description": "Verifies the profile form blocks saving when required fields are cleared or invalid and shows a validation error.",
-    "category": "Profile Management",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the username field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to the profile page"
-      },
-      {
-        "type": "action",
-        "description": "Clear a required profile field"
-      },
-      {
-        "type": "action",
-        "description": "Save profile changes"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a form validation error is visible"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC031",
-    "title": "Tests list handles empty state",
-    "description": "Verifies that when no tests are available to the user, the tests page shows an empty state rather than failing to render.",
-    "category": "Tests List & Start",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to view tests"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify either a list of tests is displayed or an empty state message is visible"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC032",
-    "title": "Save a system setting and see confirmation",
-    "description": "Verifies an authenticated user can change a configurable setting, save it, and see a save confirmation.",
-    "category": "System Settings",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to System Settings"
-      },
-      {
-        "type": "action",
-        "description": "Change a configurable option to a different valid value"
-      },
-      {
-        "type": "action",
-        "description": "Save the settings"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a settings saved confirmation is visible"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC033",
-    "title": "Apply management list filters and see results update",
-    "description": "Verifies a user can change a management list filter and the visible list updates accordingly.",
-    "category": "Management Area",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to Management"
-      },
-      {
-        "type": "action",
-        "description": "Select a different value in a list filter control"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the user list updates to reflect the selected filter"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC034",
-    "title": "Reject invalid login credentials with a visible error",
-    "description": "Verifies submitting invalid credentials does not log the user in and shows an invalid-credentials message.",
-    "category": "User Authentication",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill invalid.user@example.com into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill wrong-password into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify an invalid-credentials error message is visible"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the user remains on the login page"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC035",
-    "title": "Show row-level validation errors for a malformed bulk user file",
-    "description": "Verifies an administrator sees a validation report with row-level errors after uploading a malformed user file.",
-    "category": "Bulk User Upload",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the username field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to the bulk user upload wizard"
-      },
-      {
-        "type": "action",
-        "description": "Upload a malformed CSV/Excel file"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a validation report with row-level errors is displayed"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC036",
-    "title": "Resources page handles empty state",
-    "description": "Verifies that when no resources are available, the resources page shows an empty state rather than failing to render.",
-    "category": "Resources",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_USER}} into the email field"
-      },
-      {
-        "type": "action",
-        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to view resources"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify either materials are displayed or an empty state message is visible"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC037",
-    "title": "Saved setting persists when revisiting settings page",
-    "description": "Verifies that a saved settings change remains applied when the user leaves and returns to the settings page.",
-    "category": "System Settings",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to System Settings"
-      },
-      {
-        "type": "action",
-        "description": "Change a configurable option to a different valid value"
-      },
-      {
-        "type": "action",
-        "description": "Save the settings"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to Dashboard"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to System Settings"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify the changed option is still set to the saved value"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC038",
-    "title": "Block saving settings when required input is missing",
-    "description": "Verifies the settings form prevents saving when a required field is cleared and shows validation feedback.",
-    "category": "System Settings",
-    "steps": [
-      {
-        "type": "action",
-        "description": "Navigate to /login"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the email field with {{LOGIN_USER}}"
-      },
-      {
-        "type": "action",
-        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
-      },
-      {
-        "type": "action",
-        "description": "Submit the login form"
-      },
-      {
-        "type": "action",
-        "description": "Click the navigation link to System Settings"
-      },
-      {
-        "type": "action",
-        "description": "Clear a required settings field"
-      },
-      {
-        "type": "action",
-        "description": "Attempt to save the settings"
-      },
-      {
-        "type": "assertion",
-        "description": "Verify a required-field validation error is visible"
-      }
-    ],
-    "priority": "Low"
-  },
-  {
-    "id": "TC039",
-    "title": "Request password reset confirmation",
-    "description": "Verifies a user can submit the forgot-password form and sees a confirmation that reset instructions were sent.",
+    "title": "Forgot-password shows confirmation after submitting email",
+    "description": "Verifies a user can request a password reset and sees a confirmation message after submitting an email.",
     "category": "User Authentication",
     "steps": [
       {
@@ -1437,15 +1006,122 @@
       },
       {
         "type": "action",
-        "description": "Fill student.user@example.com into the email field"
+        "description": "Fill a valid email into the email field"
       },
       {
         "type": "action",
-        "description": "Submit the password reset request"
+        "description": "Submit the forgot-password form"
       },
       {
         "type": "assertion",
-        "description": "Verify a confirmation is visible indicating reset instructions were sent"
+        "description": "Verify a password recovery confirmation message is visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC025",
+    "title": "Reject unsupported bulk upload file type",
+    "description": "Verifies an admin cannot upload a non-CSV/unsupported file type and sees a file format validation error.",
+    "category": "Bulk User Upload",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the username field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to open bulk user upload"
+      },
+      {
+        "type": "action",
+        "description": "Upload an unsupported file type using the page upload control"
+      },
+      {
+        "type": "action",
+        "description": "Submit the upload"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a file format validation error is visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC026",
+    "title": "Open resources page and handle empty state",
+    "description": "Verifies an authenticated user can reach the resources page and sees an empty state when no resources are available.",
+    "category": "Tests & Resources Browsing",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation link to open the resources page"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify resources are displayed or an empty state is shown"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC027",
+    "title": "Admin results page handles empty state",
+    "description": "Verifies that when there are no results to show, the admin results overview displays an empty state.",
+    "category": "Results & Performance",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the email field with {{LOGIN_USER}}"
+      },
+      {
+        "type": "action",
+        "description": "Fill in the password field with {{LOGIN_PASSWORD}}"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation item to view admin results"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an empty state message is visible indicating no results are available"
       }
     ],
     "priority": "Low"

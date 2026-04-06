@@ -1,63 +1,170 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import api from '../../services/api';
 
 const ActiveTest = () => {
   const navigate = useNavigate();
-  const [timeLeft, setTimeLeft] = useState(5400); // 90 minutes in seconds
+  const { id } = useParams();
+  const [test, setTest] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [timeLeft, setTimeLeft] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [attemptId, setAttemptId] = useState(null);
+
+  // Use refs to avoid closure issues in event listeners
+  const attemptIdRef = useRef(null);
+
+  const fetchTestData = useCallback(async () => {
+    try {
+      // We first try to get the active test details (which includes attempt info if started)
+      // Actually, we'll fetch the test details and the questions
+      const testRes = await api.get(`/assessments/tests/${id}/`);
+      setTest(testRes.data);
+
+      // Now fetch attempt details to resume or initialize
+      try {
+        const attemptRes = await api.get(`/assessments/tests/${id}/attempt/`);
+        setAttemptId(attemptRes.data.id);
+        attemptIdRef.current = attemptRes.data.id;
+        
+        // Calculate remaining time
+        if (attemptRes.data.expires_at) {
+          const expires = new Date(attemptRes.data.expires_at).getTime();
+          const now = new Date().getTime();
+          setTimeLeft(Math.max(0, Math.floor((expires - now) / 1000)));
+        } else if (testRes.data.duration_minutes) {
+          setTimeLeft(testRes.data.duration_minutes * 60);
+        }
+
+        // Questions are part of the test object
+        setQuestions(testRes.data.questions || []);
+      } catch (err) {
+        // If no attempt found, maybe redirect back?
+        console.error("No active attempt found", err);
+        navigate(`/assessments/instructions/${id}`);
+      }
+    } catch (err) {
+      console.error("Failed to load test", err);
+      navigate('/tests');
+    } finally {
+      setLoading(false);
+    }
+  }, [id, navigate]);
 
   useEffect(() => {
+    fetchTestData();
+  }, [fetchTestData]);
+
+  // Timer logic
+  useEffect(() => {
+    if (timeLeft === null) return;
+    
+    if (timeLeft <= 0) {
+      handleFinalSubmit(true);
+      return;
+    }
+
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [timeLeft]);
+
+  // Proctoring logic
+  const logEvent = useCallback(async (eventType, data = {}) => {
+    if (!id) return;
+    try {
+      await api.post(`/assessments/tests/${id}/attempt/event/`, {
+        event_type: eventType,
+        event_data: data
+      });
+    } catch (err) {
+      console.error("Failed to log proctoring event", err);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        logEvent('tab_switch', { timestamp: new Date().toISOString() });
+      }
+    };
+
+    const handleBlur = () => {
+      logEvent('focus_lost', { timestamp: new Date().toISOString() });
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('blur', handleBlur);
+
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, [logEvent]);
 
   const formatTime = (seconds) => {
+    if (seconds === null) return "--:--";
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
     return `${h > 0 ? h + ':' : ''}${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
   };
 
-  const questions = [
-    {
-      id: 1,
-      text: "What is the time complexity of searching an element in a balanced binary search tree?",
-      options: ["O(n)", "O(log n)", "O(n log n)", "O(1)"],
-    },
-    {
-      id: 2,
-      text: "Which data structure follows the Last-In-First-Out (LIFO) principle?",
-      options: ["Queue", "Linked List", "Stack", "Binary Tree"],
-    },
-    {
-      id: 3,
-      text: "Which of the following sorting algorithms has the best average-case performance?",
-      options: ["Bubble Sort", "Insertion Sort", "Merge Sort", "Selection Sort"],
-    },
-  ];
+  const handleOptionSelect = async (optionId) => {
+    const questionId = questions[currentQuestion].id;
+    
+    // Optimistic UI update
+    setSelectedAnswers(prev => ({ ...prev, [questionId]: optionId }));
 
-  const handleOptionSelect = (optionIndex) => {
-    setSelectedAnswers({ ...selectedAnswers, [currentQuestion]: optionIndex });
-  };
-
-  const handleSubmit = () => {
-    if (window.confirm("Are you sure you want to submit your assessment?")) {
-      navigate('/assessments/submitted');
+    try {
+      await api.post(`/assessments/tests/${id}/attempt/answer/`, {
+        question: questionId,
+        selected_option: optionId
+      });
+    } catch (err) {
+      console.error("Failed to save answer", err);
     }
   };
+
+  const handleFinalSubmit = async (isAuto = false) => {
+    if (!isAuto && !window.confirm("Are you sure you want to submit your assessment?")) return;
+    
+    setIsSubmitting(true);
+    try {
+      await api.post(`/assessments/tests/${id}/attempt/submit/`);
+      navigate('/assessments/submitted', { state: { testId: id } });
+    } catch (err) {
+      console.error("Submission failed", err);
+      alert("Failed to submit assessment. Please check your connection.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-white z-[200] flex flex-col items-center justify-center font-body">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Securing Assessment Environment...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-surface-container-lowest z-[100] flex flex-col font-body">
       {/* Test Header */}
       <div className="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center font-bold">DS</div>
+          <div className="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center font-bold">
+            {test?.subject_name?.substring(0, 2).toUpperCase() || 'SA'}
+          </div>
           <div>
-            <h1 className="font-black text-on-surface text-lg leading-tight uppercase tracking-tight">Data Structures Mid-Term</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Student ID: CS-2023-084</p>
+            <h1 className="font-black text-on-surface text-lg leading-tight uppercase tracking-tight">{test?.title}</h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Attempt ID: {attemptId?.substring(0, 8)}</p>
           </div>
         </div>
 
@@ -69,10 +176,11 @@ const ActiveTest = () => {
             </span>
           </div>
           <button 
-            onClick={handleSubmit}
-            className="bg-primary text-white py-3 px-8 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all"
+            disabled={isSubmitting}
+            onClick={() => handleFinalSubmit(false)}
+            className="bg-primary text-white py-3 px-8 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            Submit Assessment
+            {isSubmitting ? 'Submitting...' : 'Submit Assessment'}
           </button>
         </div>
       </div>
@@ -82,14 +190,14 @@ const ActiveTest = () => {
         <div className="w-80 bg-slate-50 border-r border-slate-100 p-8 overflow-y-auto hidden lg:block">
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">Question Palette</h3>
           <div className="grid grid-cols-4 gap-3">
-            {Array.from({ length: 45 }).map((_, i) => (
+            {questions.map((q, i) => (
               <button 
-                key={i}
-                onClick={() => i < questions.length && setCurrentQuestion(i)}
+                key={q.id}
+                onClick={() => setCurrentQuestion(i)}
                 className={`w-10 h-10 rounded-xl flex items-center justify-center text-xs font-bold transition-all border ${
                   currentQuestion === i 
                     ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-110 z-10' 
-                    : selectedAnswers[i] !== undefined
+                    : selectedAnswers[q.id] !== undefined
                       ? 'bg-primary/10 text-primary border-primary/20'
                       : 'bg-white text-slate-400 border-slate-200 hover:border-primary/30'
                 }`}
@@ -107,9 +215,6 @@ const ActiveTest = () => {
             <div className="flex items-center gap-3 text-xs font-bold text-slate-600">
               <div className="w-4 h-4 rounded bg-white border border-slate-200"></div> Unvisited
             </div>
-            <div className="flex items-center gap-3 text-xs font-bold text-slate-600">
-              <div className="w-4 h-4 rounded bg-primary/10 border border-primary/20 ring-2 ring-primary/20"></div> Current
-            </div>
           </div>
         </div>
 
@@ -118,37 +223,37 @@ const ActiveTest = () => {
           <div className="max-w-3xl mx-auto">
             <div className="flex items-center justify-between mb-8">
               <span className="text-xs font-black text-primary uppercase tracking-[0.2em] bg-primary/5 px-4 py-1.5 rounded-full">
-                Question {currentQuestion + 1} of 45
+                Question {currentQuestion + 1} of {questions.length}
               </span>
-              <span className="text-xs font-bold text-slate-400">Section: Theoretical Foundations</span>
+              <span className="text-xs font-bold text-slate-400">Marks: {questions[currentQuestion]?.marks}</span>
             </div>
 
             <h2 className="text-2xl font-black text-on-surface mb-12 leading-snug">
-              {questions[currentQuestion]?.text || "Loading question content..."}
+              {questions[currentQuestion]?.question_text}
             </h2>
 
             <div className="space-y-4 mb-16">
-              {questions[currentQuestion]?.options.map((option, idx) => (
+              {questions[currentQuestion]?.options?.map((option, idx) => (
                 <button 
-                  key={idx}
-                  onClick={() => handleOptionSelect(idx)}
+                  key={option.id}
+                  onClick={() => handleOptionSelect(option.id)}
                   className={`w-full text-left p-6 rounded-2xl border-2 transition-all flex items-center gap-6 group ${
-                    selectedAnswers[currentQuestion] === idx
+                    selectedAnswers[questions[currentQuestion].id] === option.id
                       ? 'bg-primary/5 border-primary shadow-sm'
                       : 'bg-slate-50 border-transparent hover:border-slate-200'
                   }`}
                 >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm transition-all ${
-                    selectedAnswers[currentQuestion] === idx
+                    selectedAnswers[questions[currentQuestion].id] === option.id
                       ? 'bg-primary text-white'
                       : 'bg-white text-slate-400 border border-slate-200 shadow-sm group-hover:border-primary/30'
                   }`}>
                     {String.fromCharCode(65 + idx)}
                   </div>
                   <span className={`font-bold transition-colors ${
-                    selectedAnswers[currentQuestion] === idx ? 'text-primary' : 'text-on-surface-variant'
+                    selectedAnswers[questions[currentQuestion].id] === option.id ? 'text-primary' : 'text-on-surface-variant'
                   }`}>
-                    {option}
+                    {option.option_text}
                   </span>
                 </button>
               ))}
@@ -164,9 +269,6 @@ const ActiveTest = () => {
                 Previous Question
               </button>
               <div className="flex gap-4">
-                <button className="px-6 py-3 rounded-xl border-2 border-slate-100 font-bold text-xs text-slate-400 hover:bg-slate-50 transition-all">
-                  Mark for Review
-                </button>
                 <button 
                   onClick={() => currentQuestion < questions.length - 1 && setCurrentQuestion(prev => prev + 1)}
                   className="bg-primary text-white px-8 py-3 rounded-xl font-black text-xs shadow-lg shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all flex items-center gap-2"

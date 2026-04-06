@@ -1,16 +1,40 @@
 import React from 'react';
 
-const InstitutionalStats = () => {
-  const stats = [
-    { label: 'Total Users', value: '4,281', change: '+12%', icon: 'group', color: 'bg-primary/5 text-primary' },
-    { label: 'Active Assessments', value: '14', change: '8 Live Now', icon: 'quiz', color: 'bg-green-50 text-green-600' },
-    { label: 'Departments', value: '08', change: 'Instituional Core', icon: 'account_tree', color: 'bg-amber-50 text-amber-600' },
-    { label: 'System Health', value: '99.9%', change: 'All nodes UP', icon: 'security', color: 'bg-slate-900 text-white' },
+const InstitutionalStats = ({ stats }) => {
+  const displayStats = [
+    { 
+      label: 'Total Users', 
+      value: stats?.total_users?.toLocaleString() || '0', 
+      change: 'All Roles', 
+      icon: 'group', 
+      color: 'bg-primary/5 text-primary' 
+    },
+    { 
+      label: 'Active Assessments', 
+      value: stats?.total_tests || '0', 
+      change: 'Live Now', 
+      icon: 'quiz', 
+      color: 'bg-green-50 text-green-600' 
+    },
+    { 
+      label: 'Departments', 
+      value: stats?.total_departments || '0', 
+      change: 'Instituional Core', 
+      icon: 'account_tree', 
+      color: 'bg-amber-50 text-amber-600' 
+    },
+    { 
+      label: 'System Health', 
+      value: '99.9%', 
+      change: 'All nodes UP', 
+      icon: 'security', 
+      color: 'bg-slate-900 text-white' 
+    },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-      {stats.map((stat, i) => (
+      {displayStats.map((stat, i) => (
         <div key={i} className="bg-white p-8 rounded-[40px] shadow-sm border border-slate-50 relative overflow-hidden group hover:shadow-xl transition-all duration-500">
           <div className="flex items-start justify-between mb-8 relative z-10">
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${stat.color}`}>
