@@ -14,4 +14,6 @@ urlpatterns = [
     path('sections/', views.sections_list, name='sections'),
     path('<uuid:id>/', views.UserDetailView.as_view(), name='detail'),
     path('<uuid:id>/update/', views.UserUpdateView.as_view(), name='update'),
+    path('<uuid:id>/delete/', views.UserDeleteView.as_view(), name='delete'),
 ]
+

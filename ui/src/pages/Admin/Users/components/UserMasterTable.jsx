@@ -2,6 +2,8 @@ import React from 'react';
 import api from '../../../../services/api';
 
 const UserMasterTable = ({ users = [], onRefresh }) => {
+  const safeUsers = Array.isArray(users) ? users : [];
+
   const getRoleColor = (role) => {
     switch (role?.toLowerCase()) {
       case 'teacher': return 'bg-amber-50 text-amber-600 border-amber-100';
@@ -32,7 +34,7 @@ const UserMasterTable = ({ users = [], onRefresh }) => {
     }
   };
 
-  if (users.length === 0) {
+  if (safeUsers.length === 0) {
     return (
       <div className="bg-white rounded-[40px] p-20 text-center border border-slate-50 shadow-sm font-body">
         <span className="material-symbols-outlined text-6xl text-slate-200 mb-4">person_off</span>
@@ -41,6 +43,19 @@ const UserMasterTable = ({ users = [], onRefresh }) => {
       </div>
     );
   }
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("CRITICAL ACTION: Are you sure you want to PERMANENTLY DELETE this user? This will also remove their profile, settings, and activity history. This action cannot be undone.")) return;
+    
+    try {
+      await api.delete(`/users/${userId}/delete/`);
+      alert("User has been permanently deleted.");
+      onRefresh();
+    } catch (err) {
+      console.error("Failed to delete user", err);
+      alert("Failed to delete user. Please check if you have permission.");
+    }
+  };
 
   return (
     <div className="bg-white rounded-[40px] p-8 lg:p-10 shadow-sm border border-slate-50 transition-all hover:shadow-lg font-body">
@@ -56,7 +71,7 @@ const UserMasterTable = ({ users = [], onRefresh }) => {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
+            {safeUsers.map((user) => (
               <tr key={user.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
                 <td className="px-8 py-6">
                   <div className="flex items-center gap-4">
@@ -103,6 +118,13 @@ const UserMasterTable = ({ users = [], onRefresh }) => {
                         {user.is_active ? 'block' : 'undo'}
                       </span>
                     </button>
+                    <button 
+                      onClick={() => handleDeleteUser(user.id)}
+                      title="Permanent Delete User"
+                      className="w-10 h-10 rounded-xl bg-red-50 text-red-400 border border-white flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-sm">delete_forever</span>
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -111,6 +133,7 @@ const UserMasterTable = ({ users = [], onRefresh }) => {
         </table>
       </div>
     </div>
+
   );
 };
 

@@ -77,6 +77,17 @@ class UserUpdateView(generics.UpdateAPIView):
         return User.objects.filter(institution=self.request.user.institution)
 
 
+class UserDeleteView(generics.DestroyAPIView):
+    """DELETE /api/users/{id}/ - Permanently delete user (admin only)."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    lookup_field = 'id'
+    
+    def get_queryset(self):
+        # Admins can only delete users within their same institution
+        return User.objects.filter(institution=self.request.user.institution)
+
+
+
 # ============================================================
 # INSTITUTION & STRUCTURE VIEWS
 # ============================================================
@@ -98,19 +109,25 @@ def departments_list(request):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def sections_list(request):
-    """GET /api/users/sections/ - List sections (with optional department filter)."""
+    """GET /api/users/sections/ - List sections (with optional filters)."""
     department_id = request.query_params.get('department_id')
+    mine = request.query_params.get('mine') == 'true'
     
     qs = Section.objects.filter(is_active=True)
     
     if request.user.institution:
         qs = qs.filter(department__institution=request.user.institution)
     
-    if department_id:
+    # Filter only to sections where this teacher is assigned if 'mine' is true
+    if mine and hasattr(request.user, 'teacher_profile'):
+        assigned_section_ids = request.user.teacher_profile.assignments.values_list('section_id', flat=True)
+        qs = qs.filter(id__in=assigned_section_ids)
+    elif department_id:
         qs = qs.filter(department_id=department_id)
     
     serializer = SectionSerializer(qs, many=True)
     return Response({'success': True, 'data': serializer.data})
+
 
 
 @api_view(['GET'])
