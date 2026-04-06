@@ -17,10 +17,13 @@ from .serializers import (
     BehavioralEventSerializer
 )
 
+from .permissions import IsTestOwnerOrAdmin, CanTakeTest
+
 class TestViewSet(viewsets.ModelViewSet):
     queryset = Test.objects.all()
     serializer_class = TestSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsTestOwnerOrAdmin]
+
 
     def get_serializer_class(self):
         if self.action == 'list':
