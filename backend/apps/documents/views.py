@@ -25,6 +25,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q
 
 from apps.users.models import Institution
 from .models import Document, DocumentViewLog, DocumentFlag
@@ -80,17 +81,16 @@ class DocumentListView(generics.ListAPIView):
         if not institution:
             return Document.objects.none()
 
-        # Everyone sees all published documents in THEIR institution
-        qs = qs.filter(section__department__institution=institution, status=Document.Status.PUBLISHED)
-        
-        # Admins see everything (including pending/rejected) for their institution
+        # Admins see everything for their institution
         if user.is_admin:
-             # Reset status filter for admins so they can see pending/rejected too
-             qs = Document.objects.select_related('uploader', 'section__department').filter(
-                 section__department__institution=institution
-             )
+             return qs.filter(section__department__institution=institution)
 
-        return qs
+        # Others see all PUBLISHED documents in THEIR institution OR their OWN documents any state
+        return qs.filter(
+            section__department__institution=institution
+        ).filter(
+            Q(status=Document.Status.PUBLISHED) | Q(uploader=user)
+        )
 
 
 # ============================================================
@@ -203,8 +203,17 @@ class DocumentServeView(APIView):
         except Document.DoesNotExist:
             return Response({'error': 'Document not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        # Owners and admins can view non-published documents (drafts/pending)
+        # Normal viewers can ONLY see published documents
         if doc.status != Document.Status.PUBLISHED:
-            return Response({'error': 'Document is not available'}, status=status.HTTP_403_FORBIDDEN)
+            is_owner = doc.uploader == current_user
+            is_admin = current_user.role == 'admin' or current_user.is_staff
+            
+            if not (is_owner or is_admin):
+                return Response(
+                    {'error': 'Document is not available'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
         # ── Step 4: Check section access ─────────────────────────────────────
         if not self._user_can_access_document(current_user, doc):
@@ -417,6 +426,99 @@ class FlagDocumentView(APIView):
             Document.objects.filter(id=doc.id).update(status=Document.Status.FLAGGED)
 
         return Response({'success': True, 'message': 'Document flagged for review'}, status=201)
+
+
+# ============================================================
+# DOCUMENT ACTIONS (Submit/Unpublish)
+# ============================================================
+class DocumentActionView(APIView):
+    """
+    POST /api/documents/{id}/submit/   -> DRAFT -> PENDING_REVIEW
+    POST /api/documents/{id}/unpublish/ -> ANY -> DRAFT
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, document_id, action):
+        try:
+            doc = Document.objects.get(id=document_id)
+        except Document.DoesNotExist:
+            return Response({'error': 'Not found'}, status=404)
+
+        # Only uploader or admin can change status
+        if doc.uploader != request.user and not request.user.is_admin:
+            return Response({'error': 'Permission denied'}, status=403)
+
+        if action == 'submit':
+            if doc.status != Document.Status.DRAFT:
+                return Response({'error': 'Only drafts can be submitted for review'}, status=400)
+            doc.status = Document.Status.PENDING_REVIEW
+            doc.save(update_fields=['status', 'updated_at'])
+            return Response({'success': True, 'message': 'Submitted for review', 'status': doc.status})
+
+        elif action == 'unpublish':
+            doc.status = Document.Status.DRAFT
+            doc.save(update_fields=['status', 'updated_at'])
+            return Response({'success': True, 'message': 'Moved back to draft', 'status': doc.status})
+
+        return Response({'error': 'Invalid action'}, status=400)
+
+
+# ============================================================
+# ADMIN DOCUMENT ACTIONS (Approve/Reject)
+# ============================================================
+class AdminDocumentActionView(APIView):
+    """
+    POST /api/documents/{id}/approve/ -> PENDING -> PUBLISHED
+    POST /api/documents/{id}/reject/  -> PENDING -> REJECTED
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, document_id, action):
+        if not request.user.is_admin:
+            return Response({'error': 'Admin access required'}, status=403)
+
+        try:
+            doc = Document.objects.get(id=document_id)
+        except Document.DoesNotExist:
+            return Response({'error': 'Not found'}, status=404)
+
+        if action == 'approve':
+            doc.status = Document.Status.PUBLISHED
+            doc.save(update_fields=['status', 'updated_at'])
+            return Response({'success': True, 'message': 'Document approved and published'})
+
+        elif action == 'reject':
+            reason = request.data.get('reason', '')
+            doc.status = Document.Status.REJECTED
+            doc.rejection_reason = reason
+            doc.save(update_fields=['status', 'rejection_reason', 'updated_at'])
+            return Response({'success': True, 'message': 'Document rejected'})
+
+        return Response({'error': 'Invalid action'}, status=400)
+
+
+# ============================================================
+# ADMIN PENDING LIST
+# ============================================================
+class AdminPendingListView(generics.ListAPIView):
+    """GET /api/documents/pending/ - Admin review queue"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = DocumentListSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_admin:
+            return Document.objects.none()
+
+        # Admin's institution filtering
+        institution = getattr(user, 'institution', None)
+        if not institution:
+            return Document.objects.none()
+
+        return Document.objects.filter(
+            section__department__institution=institution,
+            status=Document.Status.PENDING_REVIEW
+        ).order_by('created_at')
 
 
 # ============================================================

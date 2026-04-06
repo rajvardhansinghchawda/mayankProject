@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
+import documentService from '../../../services/documentService';
 
 const formatFileSize = (bytes) => {
   if (!bytes) return '0 B';
@@ -9,8 +11,10 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-const ResourceCard = ({ res }) => {
+const ResourceCard = ({ res, onDelete }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const typeColorMap = {
     'LECTURE_NOTES': 'text-blue-500 bg-blue-50',
     'RESEARCH_PAPER': 'text-purple-500 bg-purple-50',
@@ -22,18 +26,42 @@ const ResourceCard = ({ res }) => {
     navigate(`/utilities/viewer?id=${res.id}`);
   };
 
+  const handleDelete = async (e) => {
+    e.stopPropagation();
+    if (window.confirm('ADMIN ACTION: Are you sure you want to permanently delete this resource?')) {
+      try {
+        await documentService.deleteDocument(res.id);
+        if (onDelete) onDelete();
+      } catch (err) {
+        console.error('Admin delete failed', err);
+        alert('Failed to delete resource');
+      }
+    }
+  };
+
   return (
     <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-[0_8px_20px_rgba(25,28,29,0.03)] hover:shadow-[0_15px_35px_rgba(25,28,29,0.07)] transition-all group border border-transparent hover:border-primary/10">
       <div className="flex justify-between items-start mb-6">
         <div className={`px-3 py-1 rounded-lg flex items-center justify-center font-black text-[10px] tracking-widest ${typeColorMap[res.document_type] || 'text-slate-500 bg-slate-50'}`}>
           {res.document_type?.replace('_', ' ')}
         </div>
-        <button 
-          onClick={handleView}
-          className="material-symbols-outlined text-slate-300 hover:text-primary transition-colors"
-        >
-          visibility
-        </button>
+        <div className="flex gap-2">
+          {user?.role === 'admin' && (
+            <button 
+              onClick={handleDelete}
+              className="material-symbols-outlined text-slate-300 hover:text-red-500 transition-colors"
+              title="Admin Delete"
+            >
+              delete
+            </button>
+          )}
+          <button 
+            onClick={handleView}
+            className="material-symbols-outlined text-slate-300 hover:text-primary transition-colors"
+          >
+            visibility
+          </button>
+        </div>
       </div>
       
       <h3 className="text-base font-bold text-on-surface mb-2 group-hover:text-primary transition-colors line-clamp-2 min-h-[3rem]">
@@ -63,7 +91,8 @@ const ResourceCard = ({ res }) => {
   );
 };
 
-const ResourceGrid = ({ documents }) => {
+
+const ResourceGrid = ({ documents, onRefresh }) => {
   if (!Array.isArray(documents) || documents.length === 0) {
     return (
       <div className="bg-white rounded-3xl p-12 text-center border-2 border-dashed border-slate-100">
@@ -76,10 +105,15 @@ const ResourceGrid = ({ documents }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {documents.map(res => (
-        <ResourceCard key={res.id} res={res} />
+        <ResourceCard 
+          key={res.id} 
+          res={res} 
+          onDelete={onRefresh}
+        />
       ))}
     </div>
   );
 };
+
 
 export default ResourceGrid;

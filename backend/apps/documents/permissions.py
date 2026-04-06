@@ -25,16 +25,18 @@ class CanViewDocument(BasePermission):
         if user.is_admin:
             return True
 
-        # Others can only view published documents
-        return obj.status == 'published'
+        # Others can view published documents, OR their own documents in any state
+        return obj.status == 'published' or obj.uploader == user
 
 
 class CanUploadDocument(BasePermission):
-    """Only students and teachers can upload documents."""
-    message = 'Only students and teachers can upload documents.'
+    """Only students, teachers, and admins can upload documents."""
+    message = 'Only students, teachers, and admins can upload documents.'
     
     def has_permission(self, request, view):
-        return request.user.role in ('student', 'teacher')
+        # Allow authenticated users with student, teacher, or admin roles
+        return request.user.role in ('student', 'teacher', 'admin')
+
 
 
 class IsDocumentOwnerOrAdmin(BasePermission):

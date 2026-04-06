@@ -18,26 +18,24 @@ const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
 
   useEffect(() => {
     const fetchSections = async () => {
-      if (user.role === 'admin') {
-        try {
+      try {
+        if (user.role === 'admin') {
           const response = await api.get('/admin/sections/');
-          // Handle paginated response
           const sectionData = Array.isArray(response.data) ? response.data : (response.data.results || []);
           setSections(sectionData);
-        } catch (err) {
-          console.error("Failed to fetch sections for admin", err);
+        } else if (user.role === 'teacher') {
+          // Fetch real assignments from API
+          const response = await api.get('/sections/?mine=true');
+          const sectionData = Array.isArray(response.data) ? response.data : (response.data.results || []);
+          setSections(sectionData);
+          if (sectionData.length === 1) {
+            setFormData(prev => ({ ...prev, section_id: sectionData[0].id }));
+          }
+        } else if (user.role === 'student') {
+          setFormData(prev => ({ ...prev, section_id: user.profile?.section_id || '' }));
         }
-      } else if (user.role === 'teacher') {
-        const teacherAssignedSections = user.profile?.assignments?.map(a => ({
-          id: a.section_id,
-          display_name: a.section_display || `Section ${a.section_id.substring(0, 4)}`
-        })) || [];
-        setSections(teacherAssignedSections);
-        if (teacherAssignedSections.length === 1) {
-          setFormData(prev => ({ ...prev, section_id: teacherAssignedSections[0].id }));
-        }
-      } else if (user.role === 'student') {
-        setFormData(prev => ({ ...prev, section_id: user.profile?.section_id || '' }));
+      } catch (err) {
+        console.error("Failed to fetch sections", err);
       }
     };
 
@@ -45,6 +43,7 @@ const UploadModal = ({ isOpen, onClose, onUploadSuccess }) => {
       fetchSections();
     }
   }, [isOpen, user]);
+
 
   if (!isOpen) return null;
 

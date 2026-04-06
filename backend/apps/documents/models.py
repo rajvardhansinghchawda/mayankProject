@@ -14,6 +14,7 @@ from django.core.validators import FileExtensionValidator
 # ============================================================
 class Document(models.Model):
     class Status(models.TextChoices):
+        DRAFT = 'draft', 'Draft'
         PENDING_REVIEW = 'pending', 'Pending Review'
         PUBLISHED = 'published', 'Published'
         REJECTED = 'rejected', 'Rejected'
@@ -56,7 +57,7 @@ class Document(models.Model):
     # ──────────────────────────────────────────────────────────────────────────
 
     # Status & Moderation
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING_REVIEW)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     rejection_reason = models.TextField(blank=True)
     flag_count = models.IntegerField(default=0)
     is_deleted = models.BooleanField(default=False)

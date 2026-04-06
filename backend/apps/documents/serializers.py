@@ -99,6 +99,10 @@ class DocumentUploadSerializer(serializers.Serializer):
         request = self.context['request']
         user = request.user
 
+        # Admins skip review and go straight to PUBLISHED.
+        # Others start as PENDING_REVIEW for moderation.
+        initial_status = Document.Status.PUBLISHED if user.role == 'admin' else Document.Status.PENDING_REVIEW
+
         doc = Document.objects.create(
             uploader=user,
             section=self.validated_data['section_id'],
@@ -111,8 +115,9 @@ class DocumentUploadSerializer(serializers.Serializer):
             file_size_bytes=self._pdf_metadata['size_bytes'],
             page_count=self._pdf_metadata['page_count'],
             original_filename=self._original_filename,
-            status=Document.Status.PUBLISHED,
+            status=initial_status,
         )
+
 
         logger.info(
             f"Document uploaded: id={doc.id}, title={doc.title}, "
