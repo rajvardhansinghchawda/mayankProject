@@ -71,20 +71,29 @@ const testData = [
 ];
 
 const TestCard = ({ test }) => {
-  const getStatusDisplay = (status) => {
-    switch (status) {
-      case 'active': return { label: 'Active', classes: 'bg-primary text-white shadow-lg shadow-primary/20 animate-pulse' };
+  const isSubmitted = ['submitted', 'auto_submitted'].includes(test.my_attempt_status);
+  const isInProgress = test.my_attempt_status === 'in_progress';
+
+  const getStatusDisplay = () => {
+    // 1. Student's personal attempt takes priority
+    if (isSubmitted) return { label: 'Completed', classes: 'bg-green-100 text-green-700' };
+    if (isInProgress) return { label: 'In Progress', classes: 'bg-amber-100 text-amber-700 animate-pulse' };
+    // 2. Fall back to test's global status
+    switch (test.status) {
+      case 'active':  return { label: 'Active', classes: 'bg-primary text-white shadow-lg shadow-primary/20 animate-pulse' };
       case 'published': return { label: 'Upcoming', classes: 'bg-tertiary-fixed text-on-tertiary-fixed-variant' };
-      case 'closed': 
-      case 'results_released': return { label: 'Completed', classes: 'bg-green-100 text-green-700' };
-      default: return { label: status, classes: 'bg-slate-100 text-slate-500' };
+      case 'closed':
+      case 'results_released': return { label: 'Closed', classes: 'bg-slate-100 text-slate-500' };
+      default: return { label: test.status, classes: 'bg-slate-100 text-slate-500' };
     }
   };
 
-  const displayStatus = getStatusDisplay(test.status);
+  const displayStatus = getStatusDisplay();
   const formattedDate = new Date(test.availability_start).toLocaleString([], {
     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
   });
+
+  const canStart = !isSubmitted && (test.status === 'active' || test.status === 'published');
 
   return (
     <div className="bg-surface-container-lowest rounded-2xl p-6 shadow-[0_12px_32px_rgba(25,28,29,0.04)] hover:shadow-[0_20px_40px_rgba(25,28,29,0.08)] transition-all group flex flex-col justify-between h-full">
@@ -117,20 +126,42 @@ const TestCard = ({ test }) => {
         </div>
       </div>
 
-      <Link 
-        to={test.status === 'active' || test.status === 'published' ? `/assessments/instructions/${test.id}` : '#'}
-        className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-          test.status === 'active' 
-            ? 'bg-primary text-white hover:opacity-90' 
-            : 'bg-surface-container-high text-primary hover:bg-primary hover:text-white'
-        }`}
-      >
-        {test.status === 'active' ? 'Begin Assessment' : 'View Instructions'}
-        <span className="material-symbols-outlined text-sm">arrow_forward</span>
-      </Link>
+      {isSubmitted ? (
+        <div className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-green-50 text-green-600 border border-green-200 cursor-not-allowed">
+          <span className="material-symbols-outlined text-sm">check_circle</span>
+          Assessment Submitted
+        </div>
+      ) : isInProgress ? (
+        <Link
+          to={`/assessments/active/${test.id}`}
+          className="w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 bg-amber-500 text-white hover:opacity-90"
+        >
+          <span className="material-symbols-outlined text-sm">play_arrow</span>
+          Resume Test
+          <span className="material-symbols-outlined text-sm">arrow_forward</span>
+        </Link>
+      ) : canStart ? (
+        <Link
+          to={`/assessments/instructions/${test.id}`}
+          className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+            test.status === 'active'
+              ? 'bg-primary text-white hover:opacity-90'
+              : 'bg-surface-container-high text-primary hover:bg-primary hover:text-white'
+          }`}
+        >
+          {test.status === 'active' ? 'Begin Assessment' : 'View Instructions'}
+          <span className="material-symbols-outlined text-sm">arrow_forward</span>
+        </Link>
+      ) : (
+        <div className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-100 text-slate-400 cursor-not-allowed">
+          <span className="material-symbols-outlined text-sm">lock</span>
+          Not Available
+        </div>
+      )}
     </div>
   );
 };
+
 
 const TestGrid = ({ tests }) => {
   if (!tests || tests.length === 0) {

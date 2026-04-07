@@ -21,6 +21,7 @@ import TeacherProfile from './pages/TeacherProfile';
 import TeacherResources from './pages/TeacherResources';
 import TestBuilder from './pages/TestBuilder';
 import TestSubmissionsPage from './pages/TeacherDashboard/TestSubmissions';
+import BatchAnalytics from './pages/TeacherDashboard/BatchAnalytics';
 import TestManagement from './pages/Admin/TestManagement';
 import CreateTest from './pages/Admin/Tests/CreateTest';
 import DepartmentManagement from './pages/Admin/Department';
@@ -83,6 +84,7 @@ function App() {
           <Route path="/teacher/resources" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><Layout><TeacherResources /></Layout></ProtectedRoute>} />
           <Route path="/teacher/test-builder/:testId" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><TestBuilder /></ProtectedRoute>} />
           <Route path="/teacher/test/:testId/submissions" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><Layout><TestSubmissionsPage /></Layout></ProtectedRoute>} />
+          <Route path="/teacher/test/:testId/analytics" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><Layout><BatchAnalytics /></Layout></ProtectedRoute>} />
           
           {/* Results & Analytics */}
           <Route path="/results/student" element={<ProtectedRoute allowedRoles={['student']}><Layout><StudentResults /></Layout></ProtectedRoute>} />

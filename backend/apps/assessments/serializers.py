@@ -65,10 +65,19 @@ class TestSerializer(serializers.ModelSerializer):
 class TestListSerializer(serializers.ModelSerializer):
     section_name = serializers.CharField(source='section.name', read_only=True)
     department_name = serializers.CharField(source='section.department.name', read_only=True)
-    
+    my_attempt_status = serializers.SerializerMethodField()
+
     class Meta:
         model = Test
-        fields = ['id', 'title', 'subject_name', 'status', 'availability_start', 'availability_end', 'duration_minutes', 'section_name', 'department_name']
+        fields = ['id', 'title', 'subject_name', 'status', 'availability_start', 'availability_end',
+                  'duration_minutes', 'section_name', 'department_name', 'my_attempt_status']
+
+    def get_my_attempt_status(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated and request.user.is_student:
+            attempt = obj.attempts.filter(student=request.user).first()
+            return attempt.status if attempt else None
+        return None
 
 
 class StartTestResponseSerializer(serializers.Serializer):

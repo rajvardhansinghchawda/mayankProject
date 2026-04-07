@@ -125,13 +125,22 @@ const ActiveAssessments = () => {
                       Add Questions
                     </button>
                   ) : (
-                    <Link
-                      to={`/teacher/test/${assessment.id}/submissions`}
-                      className="flex items-center gap-1.5 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl hover:bg-primary hover:text-white transition-all"
-                    >
-                      <span className="material-symbols-outlined text-sm">assignment_turned_in</span>
-                      Submissions
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/teacher/test/${assessment.id}/submissions`}
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl hover:bg-primary hover:text-white transition-all"
+                      >
+                        <span className="material-symbols-outlined text-sm">assignment_turned_in</span>
+                        Submissions
+                      </Link>
+                      <Link
+                        to={`/teacher/test/${assessment.id}/analytics`}
+                        className="flex-1 flex items-center justify-center gap-1.5 bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl hover:bg-slate-200 transition-all"
+                      >
+                        <span className="material-symbols-outlined text-sm">monitoring</span>
+                        Analytics
+                      </Link>
+                    </div>
                   )}
                 </div>
               </div>

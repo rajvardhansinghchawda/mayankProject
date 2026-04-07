@@ -127,7 +127,104 @@ class TestViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+    # ================= ANALYTICS (TEACHER) =================
+    @action(detail=True, methods=['get'])
+    def analytics(self, request, pk=None):
+        """GET /api/assessments/tests/{id}/analytics/ — Batch performance analytics for teachers."""
+        test = self.get_object()
+
+        from django.db.models import Avg, Count, FloatField
+        from django.db.models.functions import Cast
+
+        submitted_attempts = test.attempts.filter(
+            status__in=['submitted', 'auto_submitted']
+        ).select_related('student')
+
+        total_submitted = submitted_attempts.count()
+        total_enrolled = test.attempts.count()
+
+        if total_submitted == 0:
+            return Response({
+                'test_id': str(test.id),
+                'test_title': test.title,
+                'total_marks': test.total_marks,
+                'total_enrolled': total_enrolled,
+                'total_submitted': 0,
+                'avg_score': None,
+                'pass_rate': None,
+                'risk_distribution': {'low': 0, 'medium': 0, 'high': 0},
+                'score_distribution': [],
+                'top_performers': [],
+                'question_analytics': [],
+            })
+
+        # Aggregate scores
+        agg = submitted_attempts.aggregate(avg_score=Avg('score'))
+        avg_score = round(float(agg['avg_score'] or 0), 2)
+
+        passed = submitted_attempts.filter(is_passed=True).count()
+        pass_rate = round((passed / total_submitted) * 100, 1)
+
+        # Risk distribution
+        risk_dist = {
+            'low':    submitted_attempts.filter(risk_level='low').count(),
+            'medium': submitted_attempts.filter(risk_level='medium').count(),
+            'high':   submitted_attempts.filter(risk_level='high').count(),
+        }
+
+        # Score distribution buckets (0-20, 21-40, 41-60, 61-80, 81-100)
+        total_m = test.total_marks or 1
+        buckets = [('0-20', 0, 20), ('21-40', 21, 40), ('41-60', 41, 60), ('61-80', 61, 80), ('81-100', 81, 100)]
+        score_distribution = []
+        for label, low, high in buckets:
+            count = submitted_attempts.filter(
+                score__gte=(low / 100) * total_m,
+                score__lte=(high / 100) * total_m
+            ).count()
+            score_distribution.append({'range': label, 'count': count})
+
+        # Top 5 performers
+        top = submitted_attempts.filter(score__isnull=False).order_by('-score')[:5]
+        top_performers = [
+            {'name': a.student.full_name, 'score': str(a.score), 'risk_level': a.risk_level}
+            for a in top
+        ]
+
+        # Question-level analytics
+        from .models import StudentAnswer
+        question_analytics = []
+        for question in test.questions.all():
+            total_answers = StudentAnswer.objects.filter(
+                attempt__in=submitted_attempts, question=question
+            ).count()
+            correct_answers = StudentAnswer.objects.filter(
+                attempt__in=submitted_attempts, question=question, is_correct=True
+            ).count()
+            accuracy = round((correct_answers / total_answers) * 100, 1) if total_answers > 0 else None
+            question_analytics.append({
+                'question_text': question.question_text[:80],
+                'marks': question.marks,
+                'total_attempts': total_answers,
+                'correct_count': correct_answers,
+                'accuracy_pct': accuracy,
+            })
+
+        return Response({
+            'test_id': str(test.id),
+            'test_title': test.title,
+            'total_marks': test.total_marks,
+            'total_enrolled': total_enrolled,
+            'total_submitted': total_submitted,
+            'avg_score': avg_score,
+            'pass_rate': pass_rate,
+            'risk_distribution': risk_dist,
+            'score_distribution': score_distribution,
+            'top_performers': top_performers,
+            'question_analytics': question_analytics,
+        })
+
     # ================= ATTEMPTS (STUDENT) =================
+
     @action(detail=True, methods=['post'])
     def start(self, request, pk=None):
         test = self.get_object()

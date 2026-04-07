@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TeacherStats from './components/TeacherStats';
 import ActiveAssessments from './components/ActiveAssessments';
 import EvaluationQueue from './components/EvaluationQueue';
@@ -16,7 +17,9 @@ const TeacherDashboard = () => {
     totalResources: 0,
     pendingReviews: 0
   });
+  const [latestAssessmentId, setLatestAssessmentId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
@@ -34,6 +37,11 @@ const TeacherDashboard = () => {
       const sections = sectionsResp.data || (Array.isArray(sectionsResp) ? sectionsResp : []);
       const tests = testsResp.data?.results || testsResp.data || (Array.isArray(testsResp) ? testsResp : []);
       const docs = docsResp.data || (Array.isArray(docsResp) ? docsResp : []);
+
+      // Find the most recent published test for the header button
+      if (tests.length > 0) {
+        setLatestAssessmentId(tests[0].id);
+      }
 
       // Calculate real statistics from the fetched data
       const studentCount = sections.reduce((acc, s) => acc + (s.student_count || 0), 0);
@@ -72,7 +80,13 @@ const TeacherDashboard = () => {
             <span className="material-symbols-outlined">add_circle</span>
             New Assessment
           </button>
-          <button className="px-8 py-4 rounded-2xl bg-white text-primary text-sm font-black hover:bg-slate-50 transition-all border border-slate-100">Batch Analytics</button>
+          <button 
+            onClick={() => latestAssessmentId && navigate(`/teacher/test/${latestAssessmentId}/analytics`)}
+            disabled={!latestAssessmentId}
+            className={`px-8 py-4 rounded-2xl bg-white text-primary text-sm font-black transition-all border border-slate-100 ${!latestAssessmentId ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'}`}
+          >
+            Batch Analytics
+          </button>
         </div>
       </div>
 
