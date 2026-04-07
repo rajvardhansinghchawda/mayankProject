@@ -19,6 +19,8 @@ import BulkUserUploadWizard from './pages/AdminWizards/BulkUserUpload';
 import TeacherDashboard from './pages/TeacherDashboard';
 import TeacherProfile from './pages/TeacherProfile';
 import TeacherResources from './pages/TeacherResources';
+import TestBuilder from './pages/TestBuilder';
+import TestSubmissionsPage from './pages/TeacherDashboard/TestSubmissions';
 import TestManagement from './pages/Admin/TestManagement';
 import CreateTest from './pages/Admin/Tests/CreateTest';
 import DepartmentManagement from './pages/Admin/Department';
@@ -30,6 +32,7 @@ import BulkUserUpload from './pages/Admin/Users/BulkUpload';
 import ContentModeration from './pages/Admin/Moderation';
 import AdminDashboard from './pages/Admin/Dashboard';
 import AdminProfile from './pages/Admin/Profile';
+import ResourcesReview from './pages/Admin/ResourcesReview';
 import DocumentViewer from './pages/Utilities/DocumentViewer';
 import UploadDocument from './pages/Utilities/UploadDocument';
 import SystemSettings from './pages/Settings/SystemSettings';
@@ -78,6 +81,8 @@ function App() {
           <Route path="/teacher/dashboard" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><Layout><TeacherDashboard /></Layout></ProtectedRoute>} />
           <Route path="/teacher/profile" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><Layout><TeacherProfile /></Layout></ProtectedRoute>} />
           <Route path="/teacher/resources" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><Layout><TeacherResources /></Layout></ProtectedRoute>} />
+          <Route path="/teacher/test-builder/:testId" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><TestBuilder /></ProtectedRoute>} />
+          <Route path="/teacher/test/:testId/submissions" element={<ProtectedRoute allowedRoles={['teacher', 'admin']}><Layout><TestSubmissionsPage /></Layout></ProtectedRoute>} />
           
           {/* Results & Analytics */}
           <Route path="/results/student" element={<ProtectedRoute allowedRoles={['student']}><Layout><StudentResults /></Layout></ProtectedRoute>} />
@@ -95,6 +100,7 @@ function App() {
           <Route path="/admin/users/add" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AddUser /></Layout></ProtectedRoute>} />
           <Route path="/admin/users/bulk-upload" element={<ProtectedRoute allowedRoles={['admin']}><Layout><BulkUserUpload /></Layout></ProtectedRoute>} />
           <Route path="/admin/moderation" element={<ProtectedRoute allowedRoles={['admin']}><Layout><ContentModeration /></Layout></ProtectedRoute>} />
+          <Route path="/admin/resources-review" element={<ProtectedRoute allowedRoles={['admin']}><Layout><ResourcesReview /></Layout></ProtectedRoute>} />
           <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminDashboard /></Layout></ProtectedRoute>} />
           <Route path="/admin/profile" element={<ProtectedRoute allowedRoles={['admin']}><Layout><AdminProfile /></Layout></ProtectedRoute>} />
           

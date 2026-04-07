@@ -12,7 +12,8 @@ const Tests = () => {
     const fetchTests = async () => {
       try {
         const response = await api.get('/assessments/tests/');
-        setTests(response.data);
+        const data = response.data?.results ?? response.data;
+        setTests(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch tests", err);
       } finally {

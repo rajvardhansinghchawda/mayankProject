@@ -4,10 +4,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-from django.db.models import Sum
+from django.db import models
+from django.db.models import Sum, Q
 from datetime import timedelta
 import csv
 from django.http import HttpResponse
+
 
 from .models import Test, TestQuestion, QuestionOption, TestAttempt, StudentAnswer, BehavioralEvent
 from .serializers import (
@@ -20,9 +22,42 @@ from .serializers import (
 from .permissions import IsTestOwnerOrAdmin, CanTakeTest
 
 class TestViewSet(viewsets.ModelViewSet):
-    queryset = Test.objects.all()
     serializer_class = TestSerializer
-    permission_classes = [IsAuthenticated, IsTestOwnerOrAdmin]
+    
+    def get_permissions(self):
+        # Student-accessible actions: read tests + take tests
+        student_actions = ['list', 'retrieve', 'start', 'get_attempt', 'save_answer', 'submit_attempt', 'behavioral_event']
+        if self.action in student_actions:
+            return [IsAuthenticated()]
+        # Everything else (create, update, delete, publish, close, questions) = teachers/admins only
+        return [IsAuthenticated(), IsTestOwnerOrAdmin()]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Test.objects.filter(is_deleted=False).order_by('-created_at')
+
+        # Admin: See everything in the institution
+        if user.is_admin:
+            if user.institution:
+                return qs.filter(section__department__institution=user.institution)
+            return qs
+
+        # Teacher: See tests they created OR tests assigned to their sections
+        if user.is_teacher:
+            if hasattr(user, 'teacher_profile'):
+                assigned_section_ids = user.teacher_profile.assignments.values_list('section_id', flat=True)
+                return qs.filter(Q(created_by=user) | Q(section_id__in=assigned_section_ids)).distinct()
+            return qs.filter(created_by=user)
+
+        # Student: See only published tests for their section
+        if user.is_student and hasattr(user, 'student_profile'):
+            student_section = user.student_profile.section
+            if student_section:
+                return qs.filter(section=student_section, status__in=[Test.Status.PUBLISHED, Test.Status.ACTIVE, Test.Status.CLOSED, Test.Status.RESULTS_RELEASED])
+            return qs.none()
+
+        return qs.none()
+
 
 
     def get_serializer_class(self):
@@ -73,11 +108,11 @@ class TestViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['put', 'delete'], url_path=r'questions/(?P<qid>[^/.]+)')
+    @action(detail=True, methods=['put', 'patch', 'delete'], url_path=r'questions/(?P<qid>[^/.]+)')
     def handle_question_detail(self, request, pk=None, qid=None):
         test = self.get_object()
         question = get_object_or_404(TestQuestion, pk=qid, test=test)
-        if request.method == 'PUT':
+        if request.method in ['PUT', 'PATCH']:
             serializer = TestQuestionSerializer(question, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
@@ -91,6 +126,7 @@ class TestViewSet(viewsets.ModelViewSet):
             test.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
+
     # ================= ATTEMPTS (STUDENT) =================
     @action(detail=True, methods=['post'])
     def start(self, request, pk=None):
@@ -99,17 +135,26 @@ class TestViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Test not available'}, status=status.HTTP_400_BAD_REQUEST)
         
         attempt, created = TestAttempt.objects.get_or_create(test=test, student=request.user)
-        if not created and attempt.status != TestAttempt.Status.NOT_STARTED:
-            return Response({'error': 'Attempt already started'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Already submitted — block permanently
+        if attempt.status in [TestAttempt.Status.SUBMITTED, TestAttempt.Status.AUTO_SUBMITTED]:
+            return Response(
+                {'error': 'already_submitted', 'score': str(attempt.score), 'submitted_at': attempt.submitted_at},
+                status=status.HTTP_409_CONFLICT
+            )
+        
+        # Already in progress — allow resume
+        if attempt.status == TestAttempt.Status.IN_PROGRESS:
+            return Response(
+                {'error': 'already_in_progress', 'attempt_id': attempt.id, 'expires_at': attempt.expires_at},
+                status=status.HTTP_200_OK
+            )
             
         attempt.status = TestAttempt.Status.IN_PROGRESS
         attempt.started_at = timezone.now()
         duration_seconds = test.duration_minutes * 60
         attempt.expires_at = attempt.started_at + timedelta(seconds=duration_seconds)
         attempt.save()
-
-        # Trigger auto-submit scheduled task here:
-        # auto_submit_attempt.apply_async((str(attempt.id),), eta=attempt.expires_at)
 
         questions = test.questions.all()
         if test.shuffle_questions:
@@ -265,3 +310,36 @@ class TestViewSet(viewsets.ModelViewSet):
             ])
             
         return response
+
+class TestAttemptViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for students to see their own attempts and 
+    for teachers to see submissions for their tests.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return TestAttemptListSerializer
+        return TestAttemptTeacherSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        
+        # Admins see everything in their institution
+        if user.is_admin:
+            return TestAttempt.objects.filter(
+                test__section__department__institution=user.institution
+            ).order_by('-submitted_at')
+            
+        # Teachers: see attempts for tests they created or are assigned to their sections
+        if user.is_teacher and hasattr(user, 'teacher_profile'):
+            assigned_sections = user.teacher_profile.assignments.values_list('section_id', flat=True)
+            return TestAttempt.objects.filter(
+                Q(test__created_by=user) | 
+                Q(test__section_id__in=assigned_sections)
+            ).distinct().order_by('-submitted_at')
+            
+        # Students see only their own attempts
+        return TestAttempt.objects.filter(student=user).order_by('-created_at')
+

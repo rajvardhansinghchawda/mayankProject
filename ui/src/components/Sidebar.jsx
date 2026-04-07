@@ -163,6 +163,19 @@ const Sidebar = () => {
         <span>Compliance</span>
       </NavLink>
       <NavLink 
+        to="/admin/resources-review"
+        className={({ isActive }) => 
+          `flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+            isActive 
+              ? 'bg-white dark:bg-slate-800 text-primary dark:text-blue-300 shadow-sm scale-[0.98]' 
+              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
+          }`
+        }
+      >
+        <span className="material-symbols-outlined" id="admin-review-icon">fact_check</span>
+        <span>Resources Review</span>
+      </NavLink>
+      <NavLink 
         to="/admin/profile"
         className={({ isActive }) => 
           `flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
@@ -197,19 +210,51 @@ const Sidebar = () => {
         {userRole === 'admin' && renderAdminLinks()}
       </div>
       <div className="mt-auto pb-4 space-y-1">
-        <NavLink 
-          to="/settings"
-          className={({ isActive }) => 
-            `flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-              isActive 
-                ? 'bg-white dark:bg-slate-800 text-primary dark:text-blue-300 shadow-sm scale-[0.98]' 
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`
-          }
-        >
-          <span className="material-symbols-outlined" id="settings-icon">settings</span>
-          <span>Settings</span>
-        </NavLink>
+        {userRole === 'admin' && (
+          <NavLink 
+            to="/settings"
+            className={({ isActive }) => 
+              `flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                isActive 
+                  ? 'bg-white dark:bg-slate-800 text-primary dark:text-blue-300 shadow-sm scale-[0.98]' 
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
+              }`
+            }
+          >
+            <span className="material-symbols-outlined" id="settings-icon">settings</span>
+            <span>System Settings</span>
+          </NavLink>
+        )}
+        {userRole === 'student' && (
+          <NavLink 
+            to="/profile"
+            className={({ isActive }) => 
+              `flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                isActive 
+                  ? 'bg-white dark:bg-slate-800 text-primary dark:text-blue-300 shadow-sm scale-[0.98]' 
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
+              }`
+            }
+          >
+            <span className="material-symbols-outlined" id="settings-icon">manage_accounts</span>
+            <span>Settings & Profile</span>
+          </NavLink>
+        )}
+        {userRole === 'teacher' && (
+          <NavLink 
+            to="/teacher/profile"
+            className={({ isActive }) => 
+              `flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                isActive 
+                  ? 'bg-white dark:bg-slate-800 text-primary dark:text-blue-300 shadow-sm scale-[0.98]' 
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
+              }`
+            }
+          >
+            <span className="material-symbols-outlined" id="settings-icon">manage_accounts</span>
+            <span>Settings & Profile</span>
+          </NavLink>
+        )}
         <NavLink 
           to="/"
           onClick={logout}

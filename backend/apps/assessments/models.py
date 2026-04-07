@@ -52,7 +52,7 @@ class TestQuestion(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='questions')
-    question_text = models.TextField()
+    question_text = models.TextField(blank=True)
     question_type = models.CharField(max_length=20, choices=QuestionType.choices)
     marks = models.IntegerField(default=1)
     order_index = models.IntegerField()

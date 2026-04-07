@@ -115,13 +115,17 @@ def sections_list(request):
     
     qs = Section.objects.filter(is_active=True)
     
-    if request.user.institution:
+    # Filter by institution UNLESS it's a superuser (who sees everything)
+    if request.user.institution and not request.user.is_superuser:
         qs = qs.filter(department__institution=request.user.institution)
+
     
     # Filter only to sections where this teacher is assigned if 'mine' is true
-    if mine and hasattr(request.user, 'teacher_profile'):
+    # ADMIN OVERRIDE: Admins always see all institutional sections
+    if mine and not request.user.is_admin and hasattr(request.user, 'teacher_profile'):
         assigned_section_ids = request.user.teacher_profile.assignments.values_list('section_id', flat=True)
         qs = qs.filter(id__in=assigned_section_ids)
+
     elif department_id:
         qs = qs.filter(department_id=department_id)
     

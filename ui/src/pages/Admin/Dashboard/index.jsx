@@ -12,23 +12,39 @@ const AdminDashboard = () => {
   const [isLocking, setIsLocking] = useState(false);
 
   useEffect(() => {
-    // ... existing fetch logic ...
     const fetchDashboardData = async () => {
       try {
-        const [statsRes, logsRes] = await Promise.all([
+        const [statsRes, logsRes, pendingRes] = await Promise.allSettled([
           api.get('/admin/stats/'),
-          api.get('/admin/audit-log/')
+          api.get('/admin/audit-log/'),
+          api.get('/documents/pending/')
         ]);
-        setStats(statsRes.data);
-        const mappedLogs = logsRes.data.map(log => ({
-          type: log.event.toUpperCase().replace('_', ' '),
-          user: log.email,
-          role: log.ip, 
-          time: new Date(log.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' - ' + new Date(log.time).toLocaleDateString(),
-          icon: log.event.includes('success') ? 'check_circle' : 
-                log.event.includes('failure') ? 'warning' : 'person'
-        })).slice(0, 5);
-        setAuditLogs(mappedLogs);
+
+        if (statsRes.status === 'fulfilled') {
+          const statsData = statsRes.value.data?.data || statsRes.value.data;
+          setStats({ ...statsData, pending_docs: 0 });
+        }
+
+        if (pendingRes.status === 'fulfilled') {
+          const pd = pendingRes.value.data?.results || pendingRes.value.data?.data || pendingRes.value.data || [];
+          setStats(prev => ({ ...prev, pending_docs: Array.isArray(pd) ? pd.length : 0 }));
+        }
+
+        if (logsRes.status === 'fulfilled') {
+          const logsData = logsRes.value.data?.results || logsRes.value.data?.data || logsRes.value.data || [];
+          const logs = Array.isArray(logsData) ? logsData : [];
+          const mappedLogs = logs.map(log => ({
+            type: log.event?.toUpperCase().replace('_', ' ') || 'EVENT',
+            user: log.email || log.user || 'Unknown',
+            role: log.ip,
+            time: new Date(log.time || log.created_at).toLocaleString('en-IN', {
+              hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short'
+            }),
+            icon: log.event?.includes('success') ? 'check_circle' :
+                  log.event?.includes('failure') ? 'warning' : 'person'
+          })).slice(0, 6);
+          setAuditLogs(mappedLogs);
+        }
       } catch (err) {
         console.error("Failed to load dashboard data", err);
       } finally {

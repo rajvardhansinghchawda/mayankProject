@@ -19,10 +19,14 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
 class SectionSerializer(serializers.ModelSerializer):
     department_code = serializers.CharField(source='department.code', read_only=True)
+    student_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Section
-        fields = ['id', 'name', 'semester', 'academic_year', 'department_code', 'is_active']
+        fields = ['id', 'name', 'semester', 'academic_year', 'department_code', 'is_active', 'student_count']
+
+    def get_student_count(self, obj):
+        return obj.students.count()
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):

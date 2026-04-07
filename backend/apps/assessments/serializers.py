@@ -48,19 +48,28 @@ class TestQuestionStudentSerializer(serializers.ModelSerializer):
 
 class TestSerializer(serializers.ModelSerializer):
     questions = TestQuestionSerializer(many=True, read_only=True)
+    section_name = serializers.CharField(source='section.name', read_only=True)
+    department_name = serializers.CharField(source='section.department.name', read_only=True)
+    department_code = serializers.CharField(source='section.department.short_name', read_only=True)
 
     class Meta:
         model = Test
-        fields = ['id', 'created_by', 'section', 'subject_name', 'title', 'description', 
+        fields = ['id', 'created_by', 'section', 'section_name', 'department_name', 'department_code',
+                  'subject_name', 'title', 'description', 
                   'status', 'availability_start', 'availability_end', 'duration_minutes', 
                   'total_marks', 'passing_marks', 'shuffle_questions', 'shuffle_options', 
                   'show_answers_after', 'tab_switch_threshold', 'created_at', 'questions']
         read_only_fields = ['created_by', 'status', 'total_marks']
 
+
 class TestListSerializer(serializers.ModelSerializer):
+    section_name = serializers.CharField(source='section.name', read_only=True)
+    department_name = serializers.CharField(source='section.department.name', read_only=True)
+    
     class Meta:
         model = Test
-        fields = ['id', 'title', 'subject_name', 'status', 'availability_start', 'availability_end', 'duration_minutes']
+        fields = ['id', 'title', 'subject_name', 'status', 'availability_start', 'availability_end', 'duration_minutes', 'section_name', 'department_name']
+
 
 class StartTestResponseSerializer(serializers.Serializer):
     attempt_id = serializers.UUIDField()
@@ -83,9 +92,19 @@ class TestAttemptResultSerializer(serializers.ModelSerializer):
         model = TestAttempt
         fields = ['id', 'status', 'started_at', 'submitted_at', 'time_taken_seconds', 'score', 'is_passed', 'risk_level']
 
-class TestAttemptTeacherSerializer(serializers.ModelSerializer):
-    behavioral_events = BehavioralEventSerializer(many=True, read_only=True)
+class TestAttemptListSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.full_name', read_only=True)
+    test_title = serializers.CharField(source='test.title', read_only=True)
     
     class Meta:
         model = TestAttempt
-        fields = ['id', 'student', 'status', 'started_at', 'submitted_at', 'time_taken_seconds', 'score', 'is_passed', 'tab_switch_count', 'fullscreen_exit_count', 'risk_level', 'teacher_note', 'behavioral_events']
+        fields = ['id', 'student_name', 'test_title', 'status', 'submitted_at', 'score', 'risk_level']
+
+
+class TestAttemptTeacherSerializer(serializers.ModelSerializer):
+    behavioral_events = BehavioralEventSerializer(many=True, read_only=True)
+    student_name = serializers.CharField(source='student.full_name', read_only=True)
+    
+    class Meta:
+        model = TestAttempt
+        fields = ['id', 'student', 'student_name', 'status', 'started_at', 'submitted_at', 'time_taken_seconds', 'score', 'is_passed', 'tab_switch_count', 'fullscreen_exit_count', 'risk_level', 'teacher_note', 'behavioral_events']

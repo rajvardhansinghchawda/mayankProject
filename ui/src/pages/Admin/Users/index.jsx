@@ -15,13 +15,16 @@ const UserManagement = () => {
       setLoading(true);
       const response = await api.get('/users/', {
         params: {
-          search: searchTerm,
+          search: searchTerm || undefined,
           role: roleFilter !== 'all' ? roleFilter : undefined
         }
       });
-      setUsers(response.data);
+      // Backend uses StandardPagination → response.data = { count, results: [...] }
+      const data = response.data?.results || response.data?.data || response.data;
+      setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch users", err);
+      setUsers([]);
     } finally {
       setLoading(false);
     }

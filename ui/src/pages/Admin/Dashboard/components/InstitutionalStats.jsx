@@ -11,24 +11,24 @@ const InstitutionalStats = ({ stats }) => {
     },
     { 
       label: 'Active Assessments', 
-      value: stats?.total_tests || '0', 
+      value: String(stats?.total_tests || stats?.active_tests || '0'), 
       change: 'Live Now', 
       icon: 'quiz', 
       color: 'bg-green-50 text-green-600' 
     },
     { 
       label: 'Departments', 
-      value: stats?.total_departments || '0', 
-      change: 'Instituional Core', 
+      value: String(stats?.total_departments || stats?.departments_count || '0'), 
+      change: 'Institutional Core', 
       icon: 'account_tree', 
       color: 'bg-amber-50 text-amber-600' 
     },
     { 
-      label: 'System Health', 
-      value: '99.9%', 
-      change: 'All nodes UP', 
-      icon: 'security', 
-      color: 'bg-slate-900 text-white' 
+      label: 'Pending Review', 
+      value: String(stats?.pending_docs ?? '—'), 
+      change: 'Awaiting Approval', 
+      icon: 'pending_actions', 
+      color: 'bg-rose-50 text-rose-600'
     },
   ];
 

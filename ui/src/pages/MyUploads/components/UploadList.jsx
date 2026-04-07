@@ -13,10 +13,25 @@ const UploadList = ({ uploads, setUploads }) => {
   const getStatusStyle = (status) => {
     switch (status) {
       case 'published': return 'bg-green-100 text-green-700';
-      case 'pending_review': return 'bg-amber-100 text-amber-700';
+      case 'pending': return 'bg-amber-100 text-amber-700';
+      case 'draft': return 'bg-blue-100 text-blue-700';
       case 'rejected': return 'bg-red-100 text-red-700';
       case 'flagged': return 'bg-orange-100 text-orange-700';
       default: return 'bg-slate-100 text-slate-500';
+    }
+  };
+
+  const handleAction = async (id, action) => {
+    try {
+      const response = await api.post(`/documents/${id}/action/${action}/`);
+      if (response.data.success) {
+        setUploads(prev => prev.map(doc => 
+          doc.id === id ? { ...doc, status: response.data.status } : doc
+        ));
+      }
+    } catch (err) {
+      console.error(`Failed to ${action} document`, err);
+      alert(`Failed to ${action} document. Please try again.`);
     }
   };
 
@@ -88,7 +103,28 @@ const UploadList = ({ uploads, setUploads }) => {
                 </td>
                 <td className="px-8 py-4 text-right">
                   <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-primary transition-colors shadow-sm">
+                    {doc.status === 'draft' && (
+                      <button 
+                        onClick={() => handleAction(doc.id, 'submit')}
+                        title="Submit for Review"
+                        className="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-primary transition-colors shadow-sm"
+                      >
+                        <span className="material-symbols-outlined text-lg">rocket_launch</span>
+                      </button>
+                    )}
+                    {(doc.status === 'published' || doc.status === 'pending') && (
+                      <button 
+                        onClick={() => handleAction(doc.id, 'unpublish')}
+                        title="Move to Draft"
+                        className="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-amber-500 transition-colors shadow-sm"
+                      >
+                        <span className="material-symbols-outlined text-lg">undo</span>
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => window.open(`/utilities/viewer?id=${doc.id}`, '_blank')}
+                      className="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-primary transition-colors shadow-sm"
+                    >
                       <span className="material-symbols-outlined text-lg">visibility</span>
                     </button>
                     <button 

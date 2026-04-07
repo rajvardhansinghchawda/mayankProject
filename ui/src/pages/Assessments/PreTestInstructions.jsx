@@ -33,17 +33,25 @@ const PreTestInstructions = () => {
     setStarting(true);
     try {
       const response = await api.post(`/assessments/tests/${id}/start/`);
-      // Start response contains attempt_id, expires_at, questions
-      // We pass the test ID to the active test page which will fetch/resume the attempt
+      // Check if resuming an in-progress attempt
+      if (response.data?.error === 'already_in_progress') {
+        navigate(`/assessments/active/${id}`);
+        return;
+      }
       navigate(`/assessments/active/${id}`);
     } catch (err) {
-      console.error("Failed to start test", err);
-      alert(err.response?.data?.error || "Failed to start assessment. You might have an active attempt already.");
+      const errCode = err.response?.data?.error;
       
-      // If already started, still try to navigate to resume
-      if (err.response?.status === 400 && err.response?.data?.error === 'Attempt already started') {
-        navigate(`/assessments/active/${id}`);
+      // 409 = already submitted — show score and block entry
+      if (err.response?.status === 409 || errCode === 'already_submitted') {
+        const score = err.response?.data?.score;
+        alert(`You have already submitted this test. Your score: ${score ?? 'N/A'}`);
+        navigate('/assessments');
+        return;
       }
+
+      console.error("Failed to start test", err);
+      alert(err.response?.data?.error || "Failed to start assessment.");
     } finally {
       setStarting(false);
     }
