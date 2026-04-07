@@ -44,12 +44,15 @@ import SessionExpired from './pages/System/SessionExpired';
 import ForcePasswordChange from './pages/System/ForcePasswordChange';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import LandingPage from './pages/Landing/LandingPage';
+
 function App() {
   return (
     <Router>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           
           {/* Assessment Hub Flow - Protected for students */}

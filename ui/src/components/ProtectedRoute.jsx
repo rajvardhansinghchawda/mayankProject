@@ -19,7 +19,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   if (!user) {
     // Redirect to login but save the attempted path
-    return <Navigate to="/" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {

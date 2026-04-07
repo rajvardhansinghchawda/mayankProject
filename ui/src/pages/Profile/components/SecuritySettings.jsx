@@ -22,13 +22,22 @@ const SecuritySettings = () => {
 
     try {
       await api.post('/auth/password/change/', {
-        current_password: formData.currentPassword,
-        new_password: formData.newPassword
+        old_password: formData.currentPassword,
+        new_password: formData.newPassword,
+        confirm_password: formData.confirmPassword
       });
       setStatus({ type: 'success', message: 'Password updated successfully!' });
       setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err) {
-      const errorMsg = err.response?.data?.error || 'Failed to update password';
+      let errorMsg = 'Failed to update password';
+      if (err.response?.data?.error) {
+        // Validation throws error as array string sometimes, handle it
+        errorMsg = Array.isArray(err.response.data.error) ? err.response.data.error[0] : err.response.data.error;
+      } else if (err.response?.data?.errors) {
+        const errors = err.response.data.errors;
+        const firstKey = Object.keys(errors)[0];
+        errorMsg = Array.isArray(errors[firstKey]) ? errors[firstKey][0] : errors[firstKey];
+      }
       setStatus({ type: 'error', message: errorMsg });
     } finally {
       setLoading(false);

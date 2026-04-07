@@ -46,8 +46,8 @@ const Login = () => {
               <span className="material-symbols-outlined text-white text-3xl" id="brand-logo">account_balance</span>
             </div>
           </div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-primary mb-2">Mayank college</h1>
-          <p className="text-on-surface-variant font-medium tracking-wide text-sm">SECURE ACADEMIC RECORD & ASSESSMENT SYSTEM</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-primary mb-2">Shree Gujrati Samaj College</h1>
+          <p className="text-on-surface-variant font-medium tracking-wide text-sm uppercase">Heritage Meets Innovation</p>
         </div>
 
         {/* Login Card */}
@@ -140,7 +140,7 @@ const Login = () => {
               <span className="text-[10px] font-bold uppercase tracking-widest">ISO 27001 Certified</span>
             </div>
           </div>
-          <p className="text-[11px] text-on-surface-variant font-medium">© 2024 SARAS Institutional Management. All rights reserved.</p>
+          <p className="text-[11px] text-on-surface-variant font-medium">© 2026 Shree Gujrati Samaj College. All rights reserved.</p>
         </div>
       </main>
 

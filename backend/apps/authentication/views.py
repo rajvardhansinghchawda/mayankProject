@@ -244,3 +244,49 @@ def me(request):
         'success': True,
         'data': data
     })
+
+
+class BulkUploadView(APIView):
+    """
+    POST /api/auth/users/bulk-upload/
+    Accepts a CSV file and a 'role' parameter (student or teacher).
+    Admin only.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # Admin check
+        if request.user.role != User.Role.ADMIN:
+            return Response(
+                {'success': False, 'error': 'Only administrators can perform bulk uploads.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        file_obj = request.FILES.get('file')
+        role = request.data.get('role')
+
+        if not file_obj:
+            return Response({'success': False, 'error': 'No file provided.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not file_obj.name.endswith('.csv'):
+            return Response({'success': False, 'error': 'Only CSV files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
+        if role not in [User.Role.STUDENT, User.Role.TEACHER]:
+            return Response({'success': False, 'error': 'Invalid role provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            from .services.bulk_upload_service import BulkUploadService
+            result = BulkUploadService.process_csv(file_obj, role, institution=request.user.institution)
+            
+            # Log bulk upload event
+            logger.info(f"Bulk upload action by {request.user.email} - Success: {result['success_count']}, Errors: {result['error_count']}")
+
+            return Response({
+                'success': True,
+                'message': f"Processed {result['success_count']} users successfully. {result['error_count']} errors.",
+                'data': result
+            })
+        except Exception as e:
+            logger.error(f"Bulk upload error: {e}")
+            return Response({
+                'success': False,
+                'error': f"Failed to process CSV: {str(e)}"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

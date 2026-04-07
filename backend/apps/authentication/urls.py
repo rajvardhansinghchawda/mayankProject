@@ -12,4 +12,5 @@ urlpatterns = [
     path('token/refresh/', views.TokenRefreshView.as_view(), name='token_refresh'),
     path('password/change/', views.PasswordChangeView.as_view(), name='password_change'),
     path('me/', views.me, name='me'),
+    path('users/bulk-upload/', views.BulkUploadView.as_view(), name='bulk_upload'),
 ]
