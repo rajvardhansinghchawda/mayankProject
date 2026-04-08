@@ -146,43 +146,87 @@ const BulkUserUpload = () => {
             </div>
             
             {isUploading && jobStatus && (
-              <div className="text-right">
-                <p className="text-xs font-bold text-primary uppercase tracking-widest animate-pulse">
-                  {jobStatus.status === 'processing' ? `Processing ${jobStatus.success_rows + jobStatus.error_rows}/${jobStatus.total_rows}` : 'Queued...'}
+              <div className="text-right flex flex-col items-end gap-1">
+                <p className="text-[10px] font-black text-primary uppercase tracking-widest animate-pulse h-4">
+                  {jobStatus.status === 'processing' 
+                    ? `PROVISIONING: ${jobStatus.success_rows + jobStatus.error_rows} / ${jobStatus.total_rows}` 
+                    : 'INITIALIZING VAULT...'}
                 </p>
-                <div className="w-48 h-1 bg-slate-200 rounded-full mt-2 overflow-hidden">
+                <div className="w-48 h-1 bg-slate-200 rounded-full overflow-hidden">
                   <div 
-                    className="h-full bg-primary transition-all duration-500" 
-                    style={{ width: `${((jobStatus.success_rows + jobStatus.error_rows) / jobStatus.total_rows) * 100}%` }}
+                    className="h-full bg-primary transition-all duration-700 ease-out" 
+                    style={{ width: `${Math.min(100, ((jobStatus.success_rows + jobStatus.error_rows) / jobStatus.total_rows) * 100)}%` }}
                   ></div>
                 </div>
+                {jobStatus.last_processed_email && (
+                  <p className="text-[9px] text-slate-400 font-bold max-w-[180px] truncate italic mt-1">
+                    Last: {jobStatus.last_processed_email}
+                  </p>
+                )}
               </div>
             )}
 
             {uploadResult && uploadResult.success && (
-              <div className="bg-green-100 text-green-700 px-4 py-2 rounded-lg text-xs font-bold flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">check_circle</span>
-                Final: {uploadResult.data.success_rows} Success | {uploadResult.data.error_rows} Errors
+              <div className="flex flex-col items-end gap-1">
+                <div className="bg-green-100 text-green-700 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border border-green-200 shadow-sm">
+                  <span className="material-symbols-outlined text-sm">verified</span>
+                  PROVISIONING COMPLETE
+                </div>
+                <p className="text-[9px] font-bold text-slate-400">
+                  {uploadResult.data.success_rows} SECURE ACCOUNTS • {uploadResult.data.error_rows} FAILURES
+                </p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Error Report */}
+      {/* Premium Error Report */}
       {uploadResult && uploadResult.data && uploadResult.data.error_rows > 0 && (
-         <div className="bg-red-50 border border-red-100 rounded-[24px] p-6 mb-8">
-           <h4 className="text-red-700 font-bold mb-4 text-xs">Mass Provisioning Error Report</h4>
-           <div className="max-h-60 overflow-y-auto pr-4">
-             <ul className="text-[10px] text-red-600 space-y-3">
-               {uploadResult.data.error_report?.map((err, idx) => (
-                 <li key={idx} className="flex gap-4 border-b border-red-100 pb-2">
-                    <span className="font-bold whitespace-nowrap">Row {err.row}:</span>
-                    <span>{err.message} <em className="opacity-50">({err.email})</em></span>
-                 </li>
-               ))}
-             </ul>
+         <div className="bg-white border-2 border-slate-100 rounded-[32px] p-8 mb-8 shadow-xl shadow-slate-200/50">
+           <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                <span className="material-symbols-outlined text-lg">warning</span>
+              </div>
+              <div>
+                <h4 className="text-navy font-black text-sm uppercase tracking-wider">Identity Integrity Report</h4>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{uploadResult.data.error_rows} records failed validation</p>
+              </div>
            </div>
+           
+           <div className="border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
+             <table className="w-full text-left border-collapse">
+               <thead>
+                 <tr className="bg-slate-100/50 border-b border-slate-100">
+                   <th className="px-6 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest w-24">Row</th>
+                   <th className="px-6 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">Identifier</th>
+                   <th className="px-6 py-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">Failure Reason</th>
+                 </tr>
+               </thead>
+               <tbody className="divide-y divide-slate-100">
+                 {uploadResult.data.error_report?.map((err, idx) => (
+                   <tr key={idx} className="hover:bg-white transition-colors group">
+                     <td className="px-6 py-4">
+                        <span className="text-[10px] font-black text-slate-400 group-hover:text-navy transition-colors italic">#{err.row}</span>
+                     </td>
+                     <td className="px-6 py-4">
+                        <span className="text-[10px] font-bold text-navy">{err.email || 'Unknown'}</span>
+                     </td>
+                     <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                          <span className="text-[10px] font-bold text-red-600">{err.message}</span>
+                        </div>
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+           </div>
+           
+           <p className="mt-6 text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] text-center border-t border-slate-50 pt-6">
+             Please correct the records above and re-upload the spreadsheet to complete provisioning.
+           </p>
          </div>
       )}
 

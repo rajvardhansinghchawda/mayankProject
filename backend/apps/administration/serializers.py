@@ -13,4 +13,4 @@ class CSVUploadSerializer(serializers.Serializer):
 class BulkImportJobSerializer(serializers.ModelSerializer):
     class Meta:
         model = BulkImportJob
-        fields = ['id', 'import_type', 'status', 'total_rows', 'success_rows', 'error_rows', 'created_at', 'completed_at']
+        fields = ['id', 'import_type', 'status', 'total_rows', 'success_rows', 'error_rows', 'last_processed_email', 'error_report', 'created_at', 'completed_at']

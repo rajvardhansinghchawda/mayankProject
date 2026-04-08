@@ -157,6 +157,8 @@ def process_bulk_import(self, job_id: str, file_path: str = None):
                 # Update progress
                 job.success_rows = success_count
                 job.error_rows = error_count
+                if batch_users:
+                    job.last_processed_email = batch_users[-1].email
                 job.save()
 
         # Finalize

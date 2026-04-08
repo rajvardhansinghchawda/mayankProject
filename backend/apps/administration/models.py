@@ -23,6 +23,7 @@ class BulkImportJob(models.Model):
     total_rows = models.IntegerField(default=0)
     success_rows = models.IntegerField(default=0)
     error_rows = models.IntegerField(default=0)
+    last_processed_email = models.CharField(max_length=255, null=True, blank=True)
     error_report = models.JSONField(null=True, blank=True)
     
     celery_task_id = models.CharField(max_length=255, null=True, blank=True)
