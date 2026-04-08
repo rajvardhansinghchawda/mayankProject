@@ -20,6 +20,12 @@ from .serializers import SARASTokenObtainPairSerializer, PasswordChangeSerialize
 User = get_user_model()
 logger = logging.getLogger('saras')
 
+import os
+import uuid
+from django.conf import settings
+from apps.administration.models import BulkImportJob
+from tasks.bulk_import import process_bulk_import
+
 
 class LoginThrottle(AnonRateThrottle):
     """Strict rate limiting for login attempts."""
@@ -273,20 +279,43 @@ class BulkUploadView(APIView):
             return Response({'success': False, 'error': 'Invalid role provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            from .services.bulk_upload_service import BulkUploadService
-            result = BulkUploadService.process_csv(file_obj, role, institution=request.user.institution)
+            # Save file temporarily for Celery worker to access
+            temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_uploads')
+            os.makedirs(temp_dir, exist_ok=True)
             
-            # Log bulk upload event
-            logger.info(f"Bulk upload action by {request.user.email} - Success: {result['success_count']}, Errors: {result['error_count']}")
+            temp_file_name = f"bulk_{uuid.uuid4()}.csv"
+            file_path = os.path.join(temp_dir, temp_file_name)
+            
+            with open(file_path, 'wb+') as destination:
+                for chunk in file_obj.chunks():
+                    destination.write(chunk)
+
+            # Create the job tracking record
+            job = BulkImportJob.objects.create(
+                admin=request.user,
+                import_type=f"{role}s",
+                status=BulkImportJob.Status.QUEUED
+            )
+
+
+            # Offload to Celery
+            process_bulk_import.delay(str(job.id), file_path)
+            
+            logger.info(f"Bulk upload queued by {request.user.email} - Job ID: {job.id}")
 
             return Response({
                 'success': True,
-                'message': f"Processed {result['success_count']} users successfully. {result['error_count']} errors.",
-                'data': result
-            })
+                'message': f"Mass provisioning initialized. Background job started.",
+                'data': {
+                    'job_id': job.id,
+                    'status': 'queued'
+                }
+            }, status=status.HTTP_202_ACCEPTED)
+
         except Exception as e:
-            logger.error(f"Bulk upload error: {e}")
+            logger.error(f"Bulk upload queuing error: {e}")
             return Response({
                 'success': False,
-                'error': f"Failed to process CSV: {str(e)}"
+                'error': f"Failed to initialize bulk upload: {str(e)}"
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

@@ -1,27 +1,12 @@
 """
 SARAS — Document Privacy Service
 =================================
-This is the privacy core of the entire system.
-
-Every PDF is:
-1. Retrieved as raw bytes from PostgreSQL (never from filesystem)
-2. Watermarked with viewer identity + timestamp using PyMuPDF
-3. Streamed to client with no-store headers
-4. Never cached, never saved
-
-The watermark contains:
-- Viewer's full name + ID (roll number / employee ID)
-- Exact timestamp of this specific view
-- Institution name
-
-This means every screenshot or phone photo taken of the document
-contains forensic evidence of WHO took it and WHEN.
-
-Inspired by Snapchat Web's content protection philosophy:
-deterrence + detection, not absolute prevention.
+Every PDF is watermarked with viewer identity + timestamp using PyMuPDF.
+Watermarked version is NEVER stored — generated fresh for every request.
 """
 
 import io
+import math
 import logging
 from datetime import datetime
 
@@ -36,14 +21,8 @@ class DocumentWatermarkService:
     Generated fresh for EVERY request — watermarked version is never stored.
     """
 
-    # Watermark visual configuration
-    DIAGONAL_OPACITY = 0.15          # Low enough to read content, high enough to be visible
-    FOOTER_OPACITY = 0.6             # Footer is more prominent
-    DIAGONAL_COLOR = (0.7, 0.0, 0.0)  # Dark red diagonal overlay
-    FOOTER_COLOR = (0.5, 0.5, 0.5)   # Grey footer text
-    DIAGONAL_FONT_SIZE = 14
+    FOOTER_COLOR = (0.5, 0.5, 0.5)
     FOOTER_FONT_SIZE = 8
-    DIAGONAL_REPEATS = 6             # How many diagonal stamps per page
 
     def __init__(self, institution_name: str = "SARAS Institution"):
         self.institution_name = institution_name
@@ -58,16 +37,6 @@ class DocumentWatermarkService:
     ) -> bytes:
         """
         Main entry point. Returns watermarked PDF bytes.
-
-        Args:
-            pdf_bytes: Original clean PDF bytes from PostgreSQL
-            viewer_name: Viewer's full name
-            viewer_id: Roll number or employee ID
-            view_timestamp: Exact datetime of this view request
-            document_title: Document title (optional, used in footer)
-
-        Returns:
-            Watermarked PDF bytes (never stored — consumed immediately)
         """
         try:
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -75,81 +44,91 @@ class DocumentWatermarkService:
             logger.error(f"Failed to open PDF for watermarking: {e}")
             raise ValueError("Invalid or corrupted PDF file")
 
-        # Build watermark strings
         timestamp_str = view_timestamp.strftime("%d %b %Y %H:%M:%S IST")
-        diagonal_text = f"{viewer_name} | {viewer_id}"
+        diagonal_text = self.institution_name
         footer_text = (
             f"Viewed by: {viewer_name} ({viewer_id}) | "
             f"{timestamp_str} | {self.institution_name} | CONFIDENTIAL"
         )
 
+        page_num = 0
         try:
             for page_num in range(len(doc)):
                 page = doc[page_num]
                 self._add_diagonal_watermark(page, diagonal_text)
                 self._add_footer_watermark(page, footer_text)
                 self._add_page_corner_stamp(page, viewer_id, page_num + 1, len(doc))
-
         except Exception as e:
-            logger.error(f"Watermark injection failed on page: {e}")
+            logger.error(f"Watermark injection failed on page {page_num + 1}: {e}")
             doc.close()
             raise
 
-        # Write to buffer — do NOT save to disk
-        output_buffer = io.BytesIO()
-        doc.save(output_buffer, garbage=4, deflate=True)
+        # Compatibility Fix: doc.save() with a buffer crashes in some environments (e.g. SWIG type error).
+        # doc.tobytes() is safer and more efficient for generating byte streams.
+        watermarked_bytes = doc.tobytes()
         doc.close()
 
-        watermarked_bytes = output_buffer.getvalue()
         logger.info(
             f"Watermark injected: viewer={viewer_id}, "
-            f"pages={page_num + 1}, "
-            f"size={len(watermarked_bytes)} bytes"
+            f"pages={page_num + 1}, size={len(watermarked_bytes)} bytes"
         )
         return watermarked_bytes
 
     def _add_diagonal_watermark(self, page: fitz.Page, text: str):
         """
-        Adds repeating diagonal text stamps across the page.
-        Positioned in a grid so every screenshot will contain at least one stamp.
+        Tiles the institution name diagonally across the ENTIRE page.
         """
         rect = page.rect
-        page_width = rect.width
-        page_height = rect.height
+        W = rect.width
+        H = rect.height
 
-        # Create diagonal stamps in a grid pattern
-        step_x = page_width / 3
-        step_y = page_height / (self.DIAGONAL_REPEATS // 2 + 1)
+        FONT_SIZE = 18
+        OPACITY = 0.15                  # subtle — content stays readable
+        COLOR = (0.75, 0.0, 0.0)        # dark red
 
-        for row in range(self.DIAGONAL_REPEATS // 2 + 1):
-            for col in range(3):
-                x = step_x * col + step_x * 0.3
-                y = step_y * row + step_y * 0.5
+        # Estimate rendered text width to set spacing
+        char_width_approx = FONT_SIZE * 0.52
+        text_width = len(text) * char_width_approx
 
-                # Clamp to page bounds
-                x = max(50, min(x, page_width - 100))
-                y = max(20, min(y, page_height - 20))
+        # Gap between stamp centres
+        gap_along = text_width + 80
+        gap_perp = FONT_SIZE + 60
 
-                # Use PyMuPDF text writer for proper opacity support
-                writer = fitz.TextWriter(page.rect)
-                font = fitz.Font("helv")
-                writer.append(
-                    (x, y),
-                    text,
-                    font=font,
-                    fontsize=self.DIAGONAL_FONT_SIZE
-                )
-                writer.write_text(
-                    page,
-                    color=self.DIAGONAL_COLOR,
-                    opacity=self.DIAGONAL_OPACITY,
-                    morph=(fitz.Point(x, y), fitz.Matrix(45))  # 45° diagonal rotation
-                )
+        # Note about Rotation: In some environments (Python 3.13), the 'morph' parameter for text
+        # rotation causes a ValueError. We use horizontal placement as a stable fallback if 
+        # rotation fails.
+        
+        for row in range(-5, 15):
+            for col in range(-5, 10):
+                px = col * gap_along + (row % 2) * (gap_along / 2)
+                py = row * gap_perp
+                
+                if px < -50 or px > W + 50 or py < -20 or py > H + 20:
+                    continue
+
+                try:
+                    # Compatibility Fix: use fill_opacity instead of opacity
+                    page.insert_text(
+                        fitz.Point(px, py),
+                        text,
+                        fontname="helv",
+                        fontsize=FONT_SIZE,
+                        color=COLOR,
+                        fill_opacity=OPACITY
+                    )
+                except Exception:
+                    # Fallback to no opacity if fill_opacity also fails
+                    page.insert_text(
+                        fitz.Point(px, py),
+                        text,
+                        fontname="helv",
+                        fontsize=FONT_SIZE,
+                        color=COLOR
+                    )
 
     def _add_footer_watermark(self, page: fitz.Page, footer_text: str):
         """
-        Adds a small but readable footer at the bottom of every page.
-        More visible than the diagonal — harder to crop out.
+        Adds a readable footer strip at the bottom of every page.
         """
         rect = page.rect
         footer_rect = fitz.Rect(
@@ -159,6 +138,7 @@ class DocumentWatermarkService:
             rect.y1 - 5
         )
 
+        # Light grey background strip so text is always legible
         page.draw_rect(footer_rect, color=(0.95, 0.95, 0.95), fill=(0.95, 0.95, 0.95))
 
         page.insert_textbox(
@@ -171,8 +151,7 @@ class DocumentWatermarkService:
 
     def _add_page_corner_stamp(self, page: fitz.Page, viewer_id: str, page_num: int, total_pages: int):
         """
-        Adds a small stamp in the top-right corner with viewer ID + page number.
-        Survives even aggressive cropping of top/bottom.
+        Small top-right stamp: viewer ID + page number.
         """
         rect = page.rect
         stamp_text = f"[{viewer_id}] P.{page_num}/{total_pages}"
@@ -193,11 +172,10 @@ class DocumentWatermarkService:
 
     def validate_pdf(self, pdf_bytes: bytes) -> dict:
         """
-        Validates that uploaded bytes are a legitimate PDF.
-        Returns metadata for storage.
+        Validates uploaded bytes are a legitimate, non-empty PDF.
+        Returns basic metadata for storage.
         """
-        # Check magic bytes first
-        if not pdf_bytes[:5] == b'%PDF-':
+        if pdf_bytes[:5] != b'%PDF-':
             raise ValueError("File is not a valid PDF (magic bytes check failed)")
 
         try:

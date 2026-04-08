@@ -61,12 +61,12 @@ const Navbar = () => {
             <Building2 size={24} />
           </div>
           <h1 className={`text-xl font-black tracking-tight ${scrolled ? 'text-navy' : 'text-navy'}`}>
-            Shree Gujrati Samaj
+           College
           </h1>
         </div>
 
         <div className="hidden lg:flex items-center gap-8">
-          {['Academics', 'Heritage', 'Admissions', 'Campus Life', 'Research'].map((item) => (
+          {['Academics', 'Heritage',  'Campus Life', 'Research'].map((item) => (
             <a 
               key={item} 
               href="#" 
@@ -89,6 +89,7 @@ const Navbar = () => {
               className="bg-transparent border-none outline-none text-sm w-32 focus:w-48 transition-all"
             />
           </div>
+          <button className="text-sm font-black px-8 py-3.5 rounded-xl bg-navy text-black shadow-xl hover:scale-105 active:scale-95 transition-all">
           
           <Link 
             to="/login"
@@ -96,10 +97,8 @@ const Navbar = () => {
           >
             Login
           </Link>
-
-          <button className="text-sm font-black px-8 py-3.5 rounded-xl bg-navy text-white shadow-xl hover:scale-105 active:scale-95 transition-all">
-            Apply Now
-          </button>
+</button>
+          
         </div>
       </div>
     </nav>
