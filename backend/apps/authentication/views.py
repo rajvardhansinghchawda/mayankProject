@@ -20,12 +20,6 @@ from .serializers import SARASTokenObtainPairSerializer, PasswordChangeSerialize
 User = get_user_model()
 logger = logging.getLogger('saras')
 
-import os
-import uuid
-from django.conf import settings
-from apps.administration.models import BulkImportJob
-from tasks.bulk_import import process_bulk_import
-
 
 class LoginThrottle(AnonRateThrottle):
     """Strict rate limiting for login attempts."""
@@ -251,71 +245,4 @@ def me(request):
         'data': data
     })
 
-
-class BulkUploadView(APIView):
-    """
-    POST /api/auth/users/bulk-upload/
-    Accepts a CSV file and a 'role' parameter (student or teacher).
-    Admin only.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        # Admin check
-        if request.user.role != User.Role.ADMIN:
-            return Response(
-                {'success': False, 'error': 'Only administrators can perform bulk uploads.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
-        file_obj = request.FILES.get('file')
-        role = request.data.get('role')
-
-        if not file_obj:
-            return Response({'success': False, 'error': 'No file provided.'}, status=status.HTTP_400_BAD_REQUEST)
-        if not file_obj.name.endswith('.csv'):
-            return Response({'success': False, 'error': 'Only CSV files are supported.'}, status=status.HTTP_400_BAD_REQUEST)
-        if role not in [User.Role.STUDENT, User.Role.TEACHER]:
-            return Response({'success': False, 'error': 'Invalid role provided.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            # Save file temporarily for Celery worker to access
-            temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_uploads')
-            os.makedirs(temp_dir, exist_ok=True)
-            
-            temp_file_name = f"bulk_{uuid.uuid4()}.csv"
-            file_path = os.path.join(temp_dir, temp_file_name)
-            
-            with open(file_path, 'wb+') as destination:
-                for chunk in file_obj.chunks():
-                    destination.write(chunk)
-
-            # Create the job tracking record
-            job = BulkImportJob.objects.create(
-                admin=request.user,
-                import_type=f"{role}s",
-                status=BulkImportJob.Status.QUEUED
-            )
-
-
-            # Offload to Celery
-            process_bulk_import.delay(str(job.id), file_path)
-            
-            logger.info(f"Bulk upload queued by {request.user.email} - Job ID: {job.id}")
-
-            return Response({
-                'success': True,
-                'message': f"Mass provisioning initialized. Background job started.",
-                'data': {
-                    'job_id': job.id,
-                    'status': 'queued'
-                }
-            }, status=status.HTTP_202_ACCEPTED)
-
-        except Exception as e:
-            logger.error(f"Bulk upload queuing error: {e}")
-            return Response({
-                'success': False,
-                'error': f"Failed to initialize bulk upload: {str(e)}"
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

@@ -3,7 +3,7 @@ import api from '../../services/api';
 
 const BulkUserUpload = () => {
   const [file, setFile] = useState(null);
-  const [importType, setImportType] = useState('student');
+  const [importType, setImportType] = useState('students');
   const [uploading, setUploading] = useState(false);
   const [jobId, setJobId] = useState(null);
   const [status, setStatus] = useState(null);
@@ -54,7 +54,7 @@ const BulkUserUpload = () => {
             clearInterval(pollInterval);
             
             // If failed, fetch errors
-            if (res.data.status === 'failed' || res.data.processed_rows < res.data.total_rows) {
+            if ((res.data.error_rows || 0) > 0) {
               const errRes = await api.get(`/admin/users/bulk-upload/${jobId}/errors/`);
               setErrors(errRes.data.error_report || []);
             }
@@ -130,11 +130,11 @@ const BulkUserUpload = () => {
                 <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden mb-2">
                   <div 
                     className="bg-primary h-full transition-all duration-500" 
-                    style={{ width: `${(status.processed_rows / (status.total_rows || 1)) * 100}%` }}
+                    style={{ width: `${(((status.success_rows || 0) + (status.error_rows || 0)) / (status.total_rows || 1)) * 100}%` }}
                   ></div>
                 </div>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  Processing: {status.processed_rows} / {status.total_rows} Records
+                  Processing: {(status.success_rows || 0) + (status.error_rows || 0)} / {status.total_rows} Records
                 </p>
               </div>
             )}
@@ -163,8 +163,8 @@ const BulkUserUpload = () => {
                   disabled={uploading}
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs font-bold text-on-surface outline-none focus:border-primary transition-colors"
                 >
-                  <option value="student">Student Intake</option>
-                  <option value="teacher">Faculty Registry</option>
+                  <option value="students">Student Intake</option>
+                  <option value="teachers">Faculty Registry</option>
                 </select>
               </label>
             </div>

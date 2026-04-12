@@ -81,6 +81,37 @@ class UserDetailSerializer(serializers.ModelSerializer):
         return None
 
 
+class UserUpdateSerializer(serializers.ModelSerializer):
+    """Update user and nested profile. Role is read-only for safety."""
+    roll_number = serializers.CharField(max_length=50, required=False)
+    employee_id = serializers.CharField(max_length=50, required=False)
+
+    class Meta:
+        model = User
+        fields = ['email', 'full_name', 'is_active', 'roll_number', 'employee_id']
+        
+    def update(self, instance, validated_data):
+        # Update Base User fields
+        instance.email = validated_data.get('email', instance.email)
+        instance.full_name = validated_data.get('full_name', instance.full_name)
+        if 'is_active' in validated_data:
+            instance.is_active = validated_data['is_active']
+        instance.save()
+        
+        # Update Profiles if provided
+        if instance.is_student and hasattr(instance, 'student_profile'):
+            if 'roll_number' in validated_data:
+                instance.student_profile.roll_number = validated_data['roll_number']
+                instance.student_profile.save()
+        
+        if instance.is_teacher and hasattr(instance, 'teacher_profile'):
+            if 'employee_id' in validated_data:
+                instance.teacher_profile.employee_id = validated_data['employee_id']
+                instance.teacher_profile.save()
+                
+        return instance
+
+
 class UserCreateSerializer(serializers.Serializer):
     """Create a new user (admin only)."""
     email = serializers.EmailField()

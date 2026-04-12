@@ -78,20 +78,21 @@ const BulkUserUpload = () => {
     setIsUploading(true);
     const formData = new FormData();
     formData.append('file', selectedFile);
-    formData.append('role', role);
+    formData.append('import_type', role === 'student' ? 'students' : 'teachers');
 
     try {
-      const response = await api.post('/auth/users/bulk-upload/', formData, {
+      const response = await api.post('/admin/users/bulk-upload/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       });
       
-      if (response.data.success && response.data.data.job_id) {
-        setJobId(response.data.data.job_id);
+      const returnedJobId = response.data?.data?.job_id || response.data?.job_id;
+      if (returnedJobId) {
+        setJobId(returnedJobId);
         // Polling will start via useEffect
       } else {
-        setUploadResult({ success: true, data: response.data.data });
+        setUploadResult({ success: true, data: response.data });
         setIsUploading(false);
       }
     } catch (err) {

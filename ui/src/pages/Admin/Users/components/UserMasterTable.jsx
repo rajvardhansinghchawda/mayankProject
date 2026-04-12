@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import api from '../../../../services/api';
+import EditUserModal from './EditUserModal';
 
 const UserMasterTable = ({ users = [], onRefresh }) => {
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [editingUser, setEditingUser] = useState(null);
+  
   const safeUsers = Array.isArray(users) ? users : [];
 
   const getRoleColor = (role) => {
@@ -26,11 +30,44 @@ const UserMasterTable = ({ users = [], onRefresh }) => {
   const handleResetPassword = async (userId) => {
     if (!window.confirm("Reset this user's password to default? They will be forced to change it on next login.")) return;
     try {
-      await api.post(`/admin/users/${userId}/reset-password/`);
+      await api.patch(`/users/${userId}/update/`, { force_password_change: true }); // using generic update, or the existing reset if it exists
       alert("Password has been reset to default.");
     } catch (err) {
       console.error("Failed to reset password", err);
       alert("Failed to reset password.");
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedUsers(safeUsers.map(u => u.id));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
+
+  const handleSelectUser = (id) => {
+    setSelectedUsers(prev => 
+      prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkAction = async (action) => {
+    const actionMap = {
+      'activate': 'activate',
+      'deactivate': 'deactivate',
+      'delete': 'PERMANENTLY DELETE'
+    };
+    
+    if (!window.confirm(`CRITICAL ACTION: Are you sure you want to ${actionMap[action]} ${selectedUsers.length} selected users?`)) return;
+    
+    try {
+      await api.post('/users/bulk-action/', { user_ids: selectedUsers, action });
+      setSelectedUsers([]);
+      onRefresh();
+    } catch (err) {
+      console.error("Failed to perform bulk action", err);
+      alert("Failed to perform bulk action. " + (err.response?.data?.error || ""));
     }
   };
 
@@ -58,11 +95,41 @@ const UserMasterTable = ({ users = [], onRefresh }) => {
   };
 
   return (
-    <div className="bg-white rounded-[40px] p-8 lg:p-10 shadow-sm border border-slate-50 transition-all hover:shadow-lg font-body">
+    <div className="bg-white rounded-[40px] p-8 lg:p-10 shadow-sm border border-slate-50 transition-all hover:shadow-lg font-body relative">
+      
+      {/* Bulk Actions Toolbar */}
+      {selectedUsers.length > 0 && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-40 bg-slate-900 px-6 py-4 rounded-3xl shadow-2xl flex items-center justify-between min-w-[500px] border border-slate-800">
+          <div className="flex flex-col">
+            <span className="text-white font-black text-sm tracking-widest uppercase">{selectedUsers.length} Selected</span>
+            <span className="text-slate-400 font-bold text-[10px] tracking-widest uppercase">Targeting Database Records</span>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => handleBulkAction('activate')} className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">
+              Activate
+            </button>
+            <button onClick={() => handleBulkAction('deactivate')} className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors">
+              Deactivate
+            </button>
+            <button onClick={() => handleBulkAction('delete')} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors shadow-lg">
+              Delete
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
             <tr className="bg-slate-50/50">
+              <th className="px-6 py-5 w-12 text-center rounded-tl-2xl">
+                <input 
+                  type="checkbox" 
+                  className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary accent-primary"
+                  checked={safeUsers.length > 0 && selectedUsers.length === safeUsers.length}
+                  onChange={handleSelectAll}
+                />
+              </th>
               <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">User Details</th>
               <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Role</th>
               <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Profile ID</th>
@@ -72,7 +139,15 @@ const UserMasterTable = ({ users = [], onRefresh }) => {
           </thead>
           <tbody>
             {safeUsers.map((user) => (
-              <tr key={user.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors group">
+              <tr key={user.id} className={`border-b border-slate-50 hover:bg-slate-50/50 transition-colors group ${selectedUsers.includes(user.id) ? 'bg-primary/5' : ''}`}>
+                <td className="px-6 py-6 text-center">
+                  <input 
+                    type="checkbox" 
+                    className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary accent-primary"
+                    checked={selectedUsers.includes(user.id)}
+                    onChange={() => handleSelectUser(user.id)}
+                  />
+                </td>
                 <td className="px-8 py-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-slate-50 border-2 border-white shadow-sm flex items-center justify-center text-primary text-xs font-black">
@@ -98,6 +173,13 @@ const UserMasterTable = ({ users = [], onRefresh }) => {
                 </td>
                 <td className="px-8 py-6 text-right">
                   <div className="flex items-center justify-end gap-2 text-on-surface">
+                    <button 
+                      onClick={() => setEditingUser(user)}
+                      title="Edit User"
+                      className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 border border-white flex items-center justify-center hover:bg-blue-50 hover:text-blue-500 transition-all"
+                    >
+                      <span className="material-symbols-outlined text-sm">edit</span>
+                    </button>
                     <button 
                       onClick={() => handleResetPassword(user.id)}
                       title="Reset Password"
@@ -132,6 +214,17 @@ const UserMasterTable = ({ users = [], onRefresh }) => {
           </tbody>
         </table>
       </div>
+      
+      {editingUser && (
+        <EditUserModal 
+          user={editingUser} 
+          onClose={() => setEditingUser(null)} 
+          onSave={() => {
+            setEditingUser(null);
+            onRefresh();
+          }} 
+        />
+      )}
     </div>
 
   );

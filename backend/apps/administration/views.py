@@ -4,14 +4,20 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
+from django.conf import settings
+import os
+import uuid
+import logging
 
 from apps.users.models import Department, Section, Institution, LoginAuditLog
 from .models import BulkImportJob
 from .serializers import CSVUploadSerializer, BulkImportJobSerializer
 from apps.users.serializers import DepartmentSerializer, SectionSerializer, InstitutionSerializer
 from django.apps import apps
+from tasks.bulk_import import process_bulk_import
 
 User = get_user_model()
+logger = logging.getLogger('saras.admin')
 
 class AdminStatsView(views.APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -86,18 +92,59 @@ class BulkUploadView(views.APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        serializer = CSVUploadSerializer(data=request.data)
-        if serializer.is_valid():
-            import_type = serializer.validated_data['import_type']
-            
+        file_obj = request.FILES.get('file')
+        raw_import_type = request.data.get('import_type')
+        role = request.data.get('role')
+
+        import_type = raw_import_type
+        if not import_type and role:
+            role_map = {
+                'student': BulkImportJob.ImportType.STUDENTS,
+                'teacher': BulkImportJob.ImportType.TEACHERS,
+            }
+            import_type = role_map.get(role)
+
+        if import_type in ['student', 'teacher']:
+            import_type = f"{import_type}s"
+
+        serializer = CSVUploadSerializer(data={'file': file_obj, 'import_type': import_type})
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_uploads')
+            os.makedirs(temp_dir, exist_ok=True)
+
+            temp_file_name = f"bulk_{uuid.uuid4()}.csv"
+            file_path = os.path.join(temp_dir, temp_file_name)
+
+            with open(file_path, 'wb+') as destination:
+                for chunk in file_obj.chunks():
+                    destination.write(chunk)
+
             job = BulkImportJob.objects.create(
                 admin=request.user,
-                import_type=import_type
+                import_type=import_type,
+                status=BulkImportJob.Status.QUEUED
             )
-            # tasks.process_bulk_import.delay(str(job.id))
-            
-            return Response({'job_id': job.id}, status=status.HTTP_202_ACCEPTED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            process_bulk_import.delay(str(job.id), file_path)
+            logger.info("Bulk upload queued by %s - Job ID: %s", request.user.email, job.id)
+
+            return Response({
+                'job_id': job.id,
+                'success': True,
+                'data': {
+                    'job_id': job.id,
+                    'status': BulkImportJob.Status.QUEUED
+                }
+            }, status=status.HTTP_202_ACCEPTED)
+        except Exception as exc:
+            logger.error("Bulk upload queuing error: %s", str(exc))
+            return Response(
+                {'success': False, 'error': f'Failed to initialize bulk upload: {str(exc)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 class BulkUploadStatusView(views.APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]

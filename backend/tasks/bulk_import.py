@@ -33,9 +33,26 @@ def process_bulk_import(self, job_id: str, file_path: str = None):
         with open(file_path, mode='r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             rows = list(reader)
+            
+            if not rows:
+                raise ValueError("The CSV file is empty.")
+            
+            # 0. Header Validation
+            headers = [h.strip().lower() for h in rows[0].keys()]
+            required_headers = ['email', 'full_name']
+            if job.import_type == BulkImportJob.ImportType.STUDENTS:
+                required_headers.append('roll_number')
+            else:
+                required_headers.append('employee_id')
+                
+            missing = [h for h in required_headers if h not in headers]
+            if missing:
+                raise ValueError(f"Missing required columns: {', '.join(missing)}")
+
             total_rows = len(rows)
             job.total_rows = total_rows
             job.save()
+            logger.info("Starting bulk import of %s: %d rows (Job %s)", job.import_type, total_rows, job_id)
 
             # Pre-fetch Departments and Sections for the institution
             sections_cache = {}
@@ -160,6 +177,7 @@ def process_bulk_import(self, job_id: str, file_path: str = None):
                 if batch_users:
                     job.last_processed_email = batch_users[-1].email
                 job.save()
+                logger.debug("Job %s progress: %d success, %d error", job_id, success_count, error_count)
 
         # Finalize
         job.success_rows = success_count

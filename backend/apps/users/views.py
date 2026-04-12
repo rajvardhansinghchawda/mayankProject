@@ -10,7 +10,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import User, Institution, Department, Section
 from .serializers import (
     UserListSerializer, UserDetailSerializer, UserCreateSerializer,
-    InstitutionSerializer, DepartmentSerializer, SectionSerializer
+    UserUpdateSerializer, InstitutionSerializer, DepartmentSerializer, SectionSerializer
 )
 from .permissions import IsAdminUser
 
@@ -27,9 +27,19 @@ class UserListView(generics.ListAPIView):
     
     def get_queryset(self):
         user = self.request.user
-        if user.is_admin:
-            return User.objects.filter(institution=user.institution)
-        return User.objects.none()
+        if not user.is_admin:
+            return User.objects.none()
+            
+        qs = User.objects.filter(institution=user.institution)
+        
+        department_id = self.request.query_params.get('department')
+        if department_id and department_id != 'all':
+            from django.db.models import Q
+            qs = qs.filter(
+                Q(teacher_profile__department_id=department_id) |
+                Q(student_profile__section__department_id=department_id)
+            )
+        return qs
 
 
 class UserDetailView(generics.RetrieveAPIView):
@@ -68,13 +78,54 @@ class UserCreateView(generics.CreateAPIView):
 
 
 class UserUpdateView(generics.UpdateAPIView):
-    """PATCH /api/users/{id}/ - Update user (admin only)."""
+    """PATCH /api/users/{id}/update/ - Update user (admin only)."""
     permission_classes = [IsAuthenticated, IsAdminUser]
-    serializer_class = UserDetailSerializer
+    serializer_class = UserUpdateSerializer
     lookup_field = 'id'
     
     def get_queryset(self):
         return User.objects.filter(institution=self.request.user.institution)
+
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+        # Return the detailed serialized user instead of the update payload
+        user = self.get_object()
+        return Response({
+            'success': True,
+            'message': 'User updated successfully',
+            'data': UserDetailSerializer(user).data
+        })
+
+
+class UserBulkActionView(generics.GenericAPIView):
+    """POST /api/users/bulk-action/ - Perform bulk actions like deactivate/delete."""
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        user_ids = request.data.get('user_ids', [])
+        action = request.data.get('action') # 'activate', 'deactivate', 'delete'
+
+        if not isinstance(user_ids, list) or not user_ids:
+            return Response({'success': False, 'error': 'No users selected.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        users_qs = User.objects.filter(institution=request.user.institution, id__in=user_ids)
+        affected_count = 0
+
+        if action == 'activate':
+            affected_count = users_qs.update(is_active=True)
+        elif action == 'deactivate':
+            # Don't deactivate yourself
+            affected_count = users_qs.exclude(id=request.user.id).update(is_active=False)
+        elif action == 'delete':
+            # Don't delete yourself
+            affected_count, _ = users_qs.exclude(id=request.user.id).delete()
+        else:
+            return Response({'success': False, 'error': 'Invalid action.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({
+            'success': True,
+            'message': f'Successfully performed "{action}" on {affected_count} users.'
+        })
 
 
 class UserDeleteView(generics.DestroyAPIView):

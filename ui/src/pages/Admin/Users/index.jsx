@@ -9,6 +9,7 @@ const UserManagement = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [departmentFilter, setDepartmentFilter] = useState('all');
 
   const fetchUsers = async () => {
     try {
@@ -16,7 +17,9 @@ const UserManagement = () => {
       const response = await api.get('/users/', {
         params: {
           search: searchTerm || undefined,
-          role: roleFilter !== 'all' ? roleFilter : undefined
+          role: roleFilter !== 'all' ? roleFilter : undefined,
+          department: departmentFilter !== 'all' ? departmentFilter : undefined,
+          page_size: 5000 // Fetch all users at once for the dashboard
         }
       });
       // Backend uses StandardPagination → response.data = { count, results: [...] }
@@ -32,7 +35,7 @@ const UserManagement = () => {
 
   useEffect(() => {
     fetchUsers();
-  }, [searchTerm, roleFilter]);
+  }, [searchTerm, roleFilter, departmentFilter]);
 
   return (
     <div className="max-w-7xl mx-auto p-4 lg:p-12 font-body">
@@ -42,6 +45,8 @@ const UserManagement = () => {
         setSearchTerm={setSearchTerm}
         roleFilter={roleFilter}
         setRoleFilter={setRoleFilter}
+        departmentFilter={departmentFilter}
+        setDepartmentFilter={setDepartmentFilter}
       />
       
       {loading ? (
