@@ -25,6 +25,11 @@ SECRET_KEY = env('DJANGO_SECRET_KEY', default='dev-secret-key-change-in-producti
 DEBUG = env('DEBUG')
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
+# Render deployment specific
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
 # ============================================================
 # INSTALLED APPS
 # ============================================================
@@ -95,20 +100,36 @@ ASGI_APPLICATION = 'saras.asgi.application'
 # ============================================================
 # DATABASE — PostgreSQL (PDFs stored as BYTEA)
 # ============================================================
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DB_NAME', default='saras_db'),
-        'USER': env('DB_USER', default='saras_user'),
-        'PASSWORD': env('DB_PASSWORD', default='saras_dev_password'),
-        'HOST': env('DB_HOST', default='localhost'),
-        'PORT': env('DB_PORT', default='5432'),
-        'OPTIONS': {
-            'options': '-c default_transaction_isolation=serializable',
-        },
-        'CONN_MAX_AGE': 60,
+# Automatically detect DATABASE_URL from environment (Supabase, Render, Heroku)
+if env('DATABASE_URL', default=None):
+    DATABASES = {
+        'default': env.db('DATABASE_URL')
     }
-}
+    # Ensure serializable isolation level if possible
+    if 'OPTIONS' not in DATABASES['default']:
+        DATABASES['default']['OPTIONS'] = {}
+    
+    # If connection string enforces an adapter without options, handle it gracefully
+    try:
+        DATABASES['default']['OPTIONS']['options'] = '-c default_transaction_isolation=serializable'
+    except Exception:
+        pass
+    DATABASES['default']['CONN_MAX_AGE'] = 600
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': env('DB_NAME', default='saras_db'),
+            'USER': env('DB_USER', default='saras_user'),
+            'PASSWORD': env('DB_PASSWORD', default='saras_dev_password'),
+            'HOST': env('DB_HOST', default='localhost'),
+            'PORT': env('DB_PORT', default='5432'),
+            'OPTIONS': {
+                'options': '-c default_transaction_isolation=serializable',
+            },
+            'CONN_MAX_AGE': 60,
+        }
+    }
 
 # ============================================================
 # CUSTOM USER MODEL
@@ -218,6 +239,10 @@ CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
     'http://localhost:5173',
     'http://127.0.0.1:3000',
 ])
+FRONTEND_URL = os.environ.get('FRONTEND_URL')
+if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
+    
 CORS_ALLOW_CREDENTIALS = True
 
 # ============================================================
