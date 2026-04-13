@@ -111,7 +111,7 @@ const DocumentViewer = () => {
           >
             {/* The Secure Iframe */}
             <iframe 
-              src={`http://localhost:8000${doc.serve_url}&embedded=true#toolbar=0&navpanes=0&scrollbar=1`}
+              src={`${import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')}${doc.serve_url}&embedded=true#toolbar=0&navpanes=0&scrollbar=1`}
               className="w-full h-[85vh] border-0"
               title="SARAS Secure Viewer"
               onContextMenu={(e) => e.preventDefault()}
