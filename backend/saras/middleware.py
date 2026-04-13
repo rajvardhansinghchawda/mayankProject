@@ -4,6 +4,7 @@ Security headers + Login audit logging
 """
 import logging
 import time
+from django.conf import settings
 
 logger = logging.getLogger('saras')
 
@@ -32,12 +33,13 @@ class SecurityHeadersMiddleware:
             response['Content-Disposition'] = 'inline'  # Never attachment/download
             response['X-Content-Type-Options'] = 'nosniff'
             response['X-Frame-Options'] = 'ALLOWALL'
+            allowed_origins = " ".join(settings.CORS_ALLOWED_ORIGINS)
             response['Content-Security-Policy'] = (
                 "default-src 'self'; "
                 "script-src 'none'; "
                 "object-src 'none'; "
                 "plugin-types application/pdf; "
-                "frame-ancestors 'self' http://localhost:5174 http://localhost:5173;"
+                "frame-ancestors *;"
             )
             response['X-Download-Options'] = 'noopen'
             response['X-Permitted-Cross-Domain-Policies'] = 'none'

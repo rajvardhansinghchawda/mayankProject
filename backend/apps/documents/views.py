@@ -288,10 +288,9 @@ class DocumentServeView(APIView):
         response['X-Download-Options'] = 'noopen'
         response['X-Permitted-Cross-Domain-Policies'] = 'none'
         
-        allowed_origins = " ".join(settings.CORS_ALLOWED_ORIGINS)
         response['Content-Security-Policy'] = (
             "default-src 'self'; script-src 'none'; object-src 'none'; "
-            f"frame-ancestors 'self' {allowed_origins};"
+            "frame-ancestors *;"
         )
 
         logger.info(
