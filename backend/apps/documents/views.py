@@ -139,9 +139,13 @@ class DocumentDetailView(APIView):
         return Response({'success': True, 'data': data})
 
 
+from django.views.decorators.clickjacking import xframe_options_exempt
+from django.utils.decorators import method_decorator
+
 # ============================================================
 # DOCUMENT SERVE — THE PRIVACY CORE
 # ============================================================
+@method_decorator(xframe_options_exempt, name='dispatch')
 class DocumentServeView(APIView):
     """
     GET /api/documents/{id}/serve/?token=<serve_token>
