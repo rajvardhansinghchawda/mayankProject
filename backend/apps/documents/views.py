@@ -287,9 +287,11 @@ class DocumentServeView(APIView):
         response['X-Frame-Options'] = 'ALLOWALL'  # Let CSP frame-ancestors handle it
         response['X-Download-Options'] = 'noopen'
         response['X-Permitted-Cross-Domain-Policies'] = 'none'
+        
+        allowed_origins = " ".join(settings.CORS_ALLOWED_ORIGINS)
         response['Content-Security-Policy'] = (
             "default-src 'self'; script-src 'none'; object-src 'none'; "
-            "frame-ancestors 'self' http://localhost:5174 http://localhost:5173;"
+            f"frame-ancestors 'self' {allowed_origins};"
         )
 
         logger.info(
