@@ -2,12 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import assessmentService from '../../../services/assessmentService';
 import userService from '../../../services/userService';
+import { useAuth } from '../../../context/AuthContext';
 
 const CreateAssessmentModal = ({ isOpen, onClose, onSuccess }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Get the minimum datetime for the start time input (now + 5 minutes)
+  const getMinDateTime = () => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() + 5);
+    return d.toISOString().slice(0, 16);
+  };
   const [formData, setFormData] = useState({
     title: '',
     subject_name: '',
@@ -26,14 +35,15 @@ const CreateAssessmentModal = ({ isOpen, onClose, onSuccess }) => {
 
   const fetchSections = async () => {
     try {
-      // Admins should see all institutional sections, teachers see only theirs
+      // Teachers see only their assigned sections; admins see all
       const params = {};
-      if (localStorage.getItem('user_role') === 'teacher') {
+      if (user?.role === 'teacher') {
         params.mine = 'true';
       }
       const resp = await userService.getSections(params);
-      const data = resp.data || (Array.isArray(resp) ? resp : []);
-      setSections(data);
+      // Backend returns { success: true, data: [...] }
+      const data = resp.data?.data || resp.data?.results || (Array.isArray(resp.data) ? resp.data : []);
+      setSections(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Failed to fetch sections', err);
     }
@@ -47,9 +57,25 @@ const CreateAssessmentModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
+    // Validate that start time is in the future
+    if (formData.availability_start) {
+      const startTime = new Date(formData.availability_start);
+      if (startTime <= new Date()) {
+        setError('Start time must be in the future.');
+        return;
+      }
+    }
+    // Validate end time is after start time
+    if (formData.availability_start && formData.availability_end) {
+      if (new Date(formData.availability_end) <= new Date(formData.availability_start)) {
+        setError('End time must be after start time.');
+        return;
+      }
+    }
+
+    setLoading(true);
     try {
       const created = await assessmentService.createTest(formData);
       // Navigate to the Test Builder for this new draft test
@@ -63,7 +89,12 @@ const CreateAssessmentModal = ({ isOpen, onClose, onSuccess }) => {
       }
     } catch (err) {
       console.error('Creation failed', err);
-      setError(err.response?.data?.detail || 'Failed to create assessment.');
+      const errData = err.response?.data;
+      setError(
+        errData?.detail ||
+        (typeof errData === 'object' ? JSON.stringify(errData) : null) ||
+        'Failed to create assessment.'
+      );
     } finally {
       setLoading(false);
     }
@@ -121,9 +152,14 @@ const CreateAssessmentModal = ({ isOpen, onClose, onSuccess }) => {
                   value={formData.section}
                   onChange={handleInputChange}
                 >
-                  <option value="">Select Section</option>
+                  <option value="">— Select Target Batch —</option>
+                  {sections.length === 0 && (
+                    <option disabled>No assigned sections found</option>
+                  )}
                   {sections.map(s => (
-                    <option key={s.id} value={s.id}>{s.department_code} | Sec {s.name}</option>
+                    <option key={s.id} value={s.id}>
+                      {s.department_code} | Sem {s.semester} | Sec {s.name} ({s.academic_year})
+                    </option>
                   ))}
                 </select>
               </div>
@@ -131,11 +167,12 @@ const CreateAssessmentModal = ({ isOpen, onClose, onSuccess }) => {
 
             <div className="grid grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Start Time</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Start Time (must be in future)</label>
                 <input 
                   type="datetime-local"
                   name="availability_start"
                   required
+                  min={getMinDateTime()}
                   className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold"
                   value={formData.availability_start}
                   onChange={handleInputChange}

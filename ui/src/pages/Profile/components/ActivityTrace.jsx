@@ -1,6 +1,10 @@
 import React from 'react';
+import { useAuth } from '../../../context/AuthContext';
 
 const ActivityTrace = () => {
+  const { user } = useAuth();
+  const lastLogin = user?.last_login_at ? new Date(user.last_login_at).toLocaleString() : 'Not available';
+
   return (
     <div className="mt-8 bg-white/50 backdrop-blur rounded-xl p-6 border border-outline-variant/10 flex flex-wrap gap-12 items-center">
       <div className="flex items-center gap-3">
@@ -9,7 +13,7 @@ const ActivityTrace = () => {
         </div>
         <div>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Last Login</p>
-          <p className="text-sm font-bold">Oct 12, 2023 • 09:42 AM</p>
+          <p className="text-sm font-bold">{lastLogin}</p>
         </div>
       </div>
       
@@ -19,7 +23,7 @@ const ActivityTrace = () => {
         </div>
         <div>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Active Device</p>
-          <p className="text-sm font-bold">Chrome on macOS (M2)</p>
+          <p className="text-sm font-bold">Current Browser Session</p>
         </div>
       </div>
       
@@ -29,11 +33,14 @@ const ActivityTrace = () => {
         </div>
         <div>
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">IP Address</p>
-          <p className="text-sm font-bold">192.168.1.14 (Verified)</p>
+          <p className="text-sm font-bold">Hidden for privacy</p>
         </div>
       </div>
       
-      <button className="ml-auto flex items-center gap-2 text-primary font-bold text-xs hover:underline">
+      <button
+        onClick={() => window.alert('Detailed activity logs are available to administrators through the audit module.')}
+        className="ml-auto flex items-center gap-2 text-primary font-bold text-xs hover:underline"
+      >
         View Activity Log <span className="material-symbols-outlined text-xs">arrow_forward</span>
       </button>
     </div>

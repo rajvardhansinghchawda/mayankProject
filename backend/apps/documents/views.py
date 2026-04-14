@@ -69,7 +69,7 @@ class DocumentListView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Document.objects.select_related('uploader', 'section__department')
+        qs = Document.objects.select_related('uploader', 'section__department').defer('pdf_data')
 
         # Baseline: All users see published documents from their institution
         institution = getattr(user, 'institution', None)
@@ -108,7 +108,7 @@ class DocumentDetailView(APIView):
         try:
             doc = Document.objects.select_related(
                 'uploader', 'section__department__institution'
-            ).get(id=document_id)
+            ).defer('pdf_data').get(id=document_id)
         except Document.DoesNotExist:
             return Response({'error': 'Document not found'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -361,7 +361,7 @@ class MyUploadsView(generics.ListAPIView):
     serializer_class = DocumentListSerializer
 
     def get_queryset(self):
-        return Document.objects.filter(
+        return Document.objects.defer('pdf_data').filter(
             uploader=self.request.user
         ).order_by('-created_at')
 
@@ -379,7 +379,7 @@ class DocumentManageView(APIView):
 
     def patch(self, request, document_id):
         try:
-            doc = Document.objects.get(id=document_id)
+            doc = Document.objects.defer('pdf_data').get(id=document_id)
         except Document.DoesNotExist:
             return Response({'error': 'Not found'}, status=404)
 
@@ -396,7 +396,7 @@ class DocumentManageView(APIView):
 
     def delete(self, request, document_id):
         try:
-            doc = Document.objects.get(id=document_id)
+            doc = Document.objects.defer('pdf_data').get(id=document_id)
         except Document.DoesNotExist:
             return Response({'error': 'Not found'}, status=404)
 
@@ -415,7 +415,7 @@ class FlagDocumentView(APIView):
 
     def post(self, request, document_id):
         try:
-            doc = Document.objects.get(id=document_id)
+            doc = Document.objects.defer('pdf_data').get(id=document_id)
         except Document.DoesNotExist:
             return Response({'error': 'Not found'}, status=404)
 
@@ -445,7 +445,7 @@ class DocumentActionView(APIView):
 
     def post(self, request, document_id, action):
         try:
-            doc = Document.objects.get(id=document_id)
+            doc = Document.objects.defer('pdf_data').get(id=document_id)
         except Document.DoesNotExist:
             return Response({'error': 'Not found'}, status=404)
 
@@ -483,7 +483,7 @@ class AdminDocumentActionView(APIView):
             return Response({'error': 'Admin access required'}, status=403)
 
         try:
-            doc = Document.objects.get(id=document_id)
+            doc = Document.objects.defer('pdf_data').get(id=document_id)
         except Document.DoesNotExist:
             return Response({'error': 'Not found'}, status=404)
 
@@ -520,7 +520,7 @@ class AdminPendingListView(generics.ListAPIView):
         if not institution:
             return Document.objects.none()
 
-        return Document.objects.filter(
+        return Document.objects.defer('pdf_data').filter(
             section__department__institution=institution,
             status=Document.Status.PENDING_REVIEW
         ).order_by('created_at')

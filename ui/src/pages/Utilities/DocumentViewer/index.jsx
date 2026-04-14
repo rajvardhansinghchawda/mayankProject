@@ -12,6 +12,15 @@ const DocumentViewer = () => {
   const [error, setError] = useState(null);
   const [zoom, setZoom] = useState(100);
 
+  const buildServeSrc = () => {
+    if (!doc?.serve_url) return '';
+    const isAbsolute = /^https?:\/\//i.test(doc.serve_url);
+    const apiOrigin = String(api.defaults.baseURL || '').replace(/\/api\/?$/, '');
+    const baseUrl = isAbsolute ? doc.serve_url : `${apiOrigin}${doc.serve_url}`;
+    const suffix = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${suffix}embedded=true#toolbar=0&navpanes=0&scrollbar=1`;
+  };
+
   useEffect(() => {
     const fetchDoc = async () => {
       if (!documentId) {
@@ -111,7 +120,7 @@ const DocumentViewer = () => {
           >
             {/* The Secure Iframe */}
             <iframe 
-              src={`${import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')}${doc.serve_url}&embedded=true#toolbar=0&navpanes=0&scrollbar=1`}
+              src={buildServeSrc()}
               className="w-full h-[85vh] border-0"
               title="SARAS Secure Viewer"
               onContextMenu={(e) => e.preventDefault()}

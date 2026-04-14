@@ -1,8 +1,32 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../services/api';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const [identifier, setIdentifier] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [status, setStatus] = React.useState({ type: '', message: '' });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus({ type: '', message: '' });
+
+    try {
+      const response = await api.post('/auth/password/reset-request/', { identifier });
+      setStatus({
+        type: 'success',
+        message: response.data?.message || 'If an account exists, a recovery link has been sent.'
+      });
+      setIdentifier('');
+    } catch (err) {
+      const msg = err.response?.data?.error || err.response?.data?.detail || 'Unable to process your request right now.';
+      setStatus({ type: 'error', message: typeof msg === 'string' ? msg : JSON.stringify(msg) });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-8 font-body">
@@ -17,7 +41,7 @@ const ForgotPassword = () => {
           </p>
         </div>
 
-        <form className="space-y-8">
+        <form className="space-y-8" onSubmit={handleSubmit}>
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1" htmlFor="recovery-id">Institutional Email / Roll No.</label>
             <div className="relative group">
@@ -28,17 +52,27 @@ const ForgotPassword = () => {
                 id="recovery-id"
                 type="text" 
                 placeholder="e.g. STU10293 or name@institution.edu" 
+                required
                 className="w-full bg-slate-50 border-0 rounded-2xl pl-12 pr-4 py-4 font-bold text-on-surface focus:ring-2 focus:ring-primary/20" 
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
               />
             </div>
           </div>
 
+          {status.message && (
+            <div className={`p-3 rounded-xl text-xs font-bold ${status.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
+              {status.message}
+            </div>
+          )}
+
           <button 
             type="submit"
+            disabled={loading}
             className="w-full bg-primary text-white py-5 rounded-2xl font-black text-sm shadow-xl shadow-primary/20 hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
           >
-            Send Recovery Hash
-            <span className="material-symbols-outlined text-lg">send</span>
+            {loading ? 'Processing...' : 'Send Recovery Hash'}
+            {!loading && <span className="material-symbols-outlined text-lg">send</span>}
           </button>
         </form>
 

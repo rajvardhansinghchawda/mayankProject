@@ -45,7 +45,12 @@ const Tests = () => {
           <h4 className="text-lg font-bold text-primary mb-1">Institutional Integrity & Exam Conduct</h4>
           <p className="text-sm text-on-surface-variant">All assessments are monitored via SARAS AI Proctoring. Ensure you have a stable connection and follow the specific instructions provided for each test module. Academic dishonesty will lead to immediate disqualification.</p>
         </div>
-        <button className="px-6 py-3 bg-white text-primary font-bold rounded-xl shadow-sm hover:shadow-md transition-all text-sm flex items-center gap-2">
+        <button
+          onClick={() => {
+            window.alert('Guidelines: keep camera on, avoid tab switching, and submit before timer expiry. Contact your faculty for full exam policy.');
+          }}
+          className="px-6 py-3 bg-white text-primary font-bold rounded-xl shadow-sm hover:shadow-md transition-all text-sm flex items-center gap-2"
+        >
           View All Guidelines
           <span className="material-symbols-outlined text-sm">open_in_new</span>
         </button>

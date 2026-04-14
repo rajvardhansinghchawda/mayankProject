@@ -14,7 +14,7 @@ def run_seed():
     
     print("Creating Institution...")
     institution = Institution.objects.create(
-        name="Mayank College of Engineering",
+        name="Shree Gujarti Samaj BHMS college Indore",
         short_name="MCE",
         address="123 Tech Lane, Knowledge City",
         website="https://www.mayankcollege.edu"

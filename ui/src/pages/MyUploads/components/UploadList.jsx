@@ -122,7 +122,9 @@ const UploadList = ({ uploads, setUploads }) => {
                       </button>
                     )}
                     <button 
-                      onClick={() => window.open(`/utilities/viewer?id=${doc.id}`, '_blank')}
+                      onClick={() => {
+                        window.location.assign(`/utilities/viewer?id=${doc.id}`);
+                      }}
                       className="p-2 hover:bg-white rounded-lg text-slate-400 hover:text-primary transition-colors shadow-sm"
                     >
                       <span className="material-symbols-outlined text-lg">visibility</span>

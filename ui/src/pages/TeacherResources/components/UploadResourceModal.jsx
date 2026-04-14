@@ -43,7 +43,7 @@ const UploadResourceModal = ({ isOpen, onClose, onUploadSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.pdf_file || !formData.section) {
+    if (!formData.pdf_file || !formData.section_id) {
       setError('Please provide a file and select a section.');
       return;
     }
@@ -114,11 +114,11 @@ const UploadResourceModal = ({ isOpen, onClose, onUploadSuccess }) => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Assign Section</label>
                 <select 
-                  name="section"
+                  name="section_id"
                   required
                   className="w-full bg-slate-50 border-none rounded-2xl p-4 font-bold text-on-surface focus:ring-2 focus:ring-primary/20 appearance-none"
                   value={formData.section_id}
-                  onChange={(e) => setFormData({...formData, section_id: e.target.value})}
+                  onChange={handleInputChange}
                 >
                   <option value="">Select Target Batch</option>
                   {sections.map(s => (
@@ -178,6 +178,7 @@ const UploadResourceModal = ({ isOpen, onClose, onUploadSuccess }) => {
                 <input 
                   type="file"
                   accept="application/pdf"
+                  required
                   onChange={handleFileChange}
                   className="hidden"
                   id="pdf-upload"

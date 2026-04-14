@@ -4,7 +4,7 @@ Custom JWT serializers with user metadata and force_password_change check
 """
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from apps.users.models import User
+from apps.users.models import User, StudentProfile
 
 
 class SARASTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -35,6 +35,13 @@ class SARASTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
     
     def validate(self, attrs):
+        # Support both email and student roll-number as login identifier.
+        identifier = (attrs.get('email') or attrs.get('identifier') or '').strip()
+        if identifier and '@' not in identifier:
+            profile = StudentProfile.objects.select_related('user').filter(roll_number=identifier).first()
+            if profile:
+                attrs['email'] = profile.user.email
+
         data = super().validate(attrs)
         
         # Add user metadata to response
@@ -98,10 +105,9 @@ class PasswordChangeSerializer(serializers.Serializer):
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     """Request password reset via email."""
-    email = serializers.EmailField(required=True)
-    
-    def validate_email(self, value):
-        if not User.objects.filter(email=value).exists():
-            # Don't reveal if email exists or not (security)
-            pass
+    identifier = serializers.CharField(required=True)
+
+    def validate_identifier(self, value):
+        value = value.strip()
+        # Privacy-first flow: do not reveal existence or non-existence.
         return value

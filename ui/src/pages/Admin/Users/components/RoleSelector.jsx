@@ -5,7 +5,6 @@ const RoleSelector = ({ selectedRole, onSelect }) => {
     { id: 'student', label: 'Student', desc: 'Enrolled individuals taking assessments.', icon: 'person' },
     { id: 'teacher', label: 'Faculty / Teacher', desc: 'Manage courses and grade submissions.', icon: 'school' },
     { id: 'admin', label: 'Administrator', desc: 'Full institutional management access.', icon: 'admin_panel_settings' },
-    { id: 'proctor', label: 'External Proctor', desc: 'Monitor assessments and review flags.', icon: 'visibility' },
   ];
 
   return (

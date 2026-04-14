@@ -61,13 +61,18 @@ class UserCreateView(generics.CreateAPIView):
     serializer_class = UserCreateSerializer
     
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        data = request.data.copy()
+        # If institution_id not provided in request, use the admin's own institution
+        if not data.get('institution_id'):
+            data['institution_id'] = str(request.user.institution_id) if request.user.institution_id else None
+        
+        serializer = self.get_serializer(data=data)
         if not serializer.is_valid():
             return Response({
                 'success': False,
                 'errors': serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         user = serializer.save()
         
         return Response({

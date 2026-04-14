@@ -66,15 +66,20 @@ const Navbar = () => {
         </div>
 
         <div className="hidden lg:flex items-center gap-8">
-          {['Academics', 'Heritage',  'Campus Life', 'Research'].map((item) => (
-            <a 
-              key={item} 
-              href="#" 
+          {[
+            { label: 'Academics', href: '#ecosystem' },
+            { label: 'Heritage', href: '#heritage' },
+            { label: 'Campus Life', href: '#heritage' },
+            { label: 'Research', href: '/login' },
+          ].map((item, idx) => (
+            <a
+              key={item.label}
+              href={item.href}
               className={`text-sm font-bold transition-all hover:text-gold ${
                 scrolled ? 'text-slate-600' : 'text-slate-700'
-              } ${item === 'Academics' ? 'border-b-2 border-navy text-navy' : ''}`}
+              } ${idx === 0 ? 'border-b-2 border-navy text-navy' : ''}`}
             >
-              {item}
+              {item.label}
             </a>
           ))}
         </div>
@@ -190,7 +195,7 @@ const Ecosystem = () => {
   ];
 
   return (
-    <section className="py-32 bg-[#F2F4F7] relative">
+    <section id="ecosystem" className="py-32 bg-[#F2F4F7] relative">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="max-w-2xl mb-20">
           <h2 className="text-5xl font-black text-navy mb-6">The Digital Campus Ecosystem</h2>
@@ -231,7 +236,7 @@ const Ecosystem = () => {
 
 const LegacySection = () => {
   return (
-    <section className="py-32 bg-white flex flex-col items-center">
+    <section id="heritage" className="py-32 bg-white flex flex-col items-center">
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-20 items-center">
           <motion.div
@@ -268,9 +273,9 @@ const LegacySection = () => {
               </div>
             </div>
 
-            <a href="#" className="inline-flex items-center gap-2 text-sm font-black text-navy border-b-2 border-navy pb-1 hover:text-gold hover:border-gold transition-all">
+            <Link to="/login" className="inline-flex items-center gap-2 text-sm font-black text-navy border-b-2 border-navy pb-1 hover:text-gold hover:border-gold transition-all">
               View Historical Timeline
-            </a>
+            </Link>
           </div>
         </div>
       </div>
@@ -296,9 +301,9 @@ const Footer = () => {
             </p>
             <div className="flex items-center gap-4">
               {['facebook', 'public', 'account_box', 'language'].map((icon, i) => (
-                <a key={i} href="#" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-300 hover:bg-gold hover:text-navy transition-all">
+                <Link key={i} to="/login" className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-slate-300 hover:bg-gold hover:text-navy transition-all">
                   <SocialIcon name={icon} className="text-[20px]" />
-                </a>
+                </Link>
               ))}
             </div>
           </div>
@@ -308,7 +313,7 @@ const Footer = () => {
             <ul className="space-y-4">
               <li><Link to="/login" className="text-slate-400 font-medium text-sm hover:text-white transition-all">Student/Teacher Login</Link></li>
               {['Academic Calendar', 'Research Portal', 'Alumni Network', 'Career Center'].map(link => (
-                <li key={link}><a href="#" className="text-slate-400 font-medium text-sm hover:text-white transition-all">{link}</a></li>
+                <li key={link}><Link to="/login" className="text-slate-400 font-medium text-sm hover:text-white transition-all">{link}</Link></li>
               ))}
             </ul>
           </div>
@@ -317,7 +322,7 @@ const Footer = () => {
             <h4 className="text-sm font-black uppercase tracking-widest mb-10 text-gold">Resources</h4>
             <ul className="space-y-4">
               {['Student Handbook', 'Privacy Policy', 'Code of Conduct', 'Media Assets'].map(link => (
-                <li key={link}><a href="#" className="text-slate-400 font-medium text-sm hover:text-white transition-all">{link}</a></li>
+                <li key={link}><Link to="/login" className="text-slate-400 font-medium text-sm hover:text-white transition-all">{link}</Link></li>
               ))}
             </ul>
           </div>

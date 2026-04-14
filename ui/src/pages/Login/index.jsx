@@ -60,7 +60,7 @@ const Login = () => {
           {authError && (
             <div className="mb-6 p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm flex items-start gap-3">
               <span className="material-symbols-outlined text-red-500 text-[20px]">error</span>
-              <div>{authError}</div>
+              <div>{typeof authError === 'string' ? authError : JSON.stringify(authError)}</div>
             </div>
           )}
 

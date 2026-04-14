@@ -15,7 +15,11 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.users.models import LoginAuditLog
-from .serializers import SARASTokenObtainPairSerializer, PasswordChangeSerializer
+from .serializers import (
+    SARASTokenObtainPairSerializer,
+    PasswordChangeSerializer,
+    PasswordResetRequestSerializer,
+)
 
 User = get_user_model()
 logger = logging.getLogger('saras')
@@ -36,19 +40,20 @@ class SARASLoginView(TokenObtainPairView):
     throttle_classes = [LoginThrottle]
     
     def post(self, request, *args, **kwargs):
-        email = request.data.get('email', '')
+        identifier = (request.data.get('email') or request.data.get('identifier') or '').strip()
         
         # Attempt authentication
         response = super().post(request, *args, **kwargs)
         
         if response.status_code == 200:
             # Login successful
-            user = User.objects.get(email=email)
+            user_email = response.data.get('user', {}).get('email')
+            user = User.objects.get(email=user_email)
             
             # Create audit log
             LoginAuditLog.objects.create(
                 user=user,
-                email_attempted=email,
+                email_attempted=user.email,
                 event_type=LoginAuditLog.EventType.LOGIN_SUCCESS,
                 ip_address=getattr(request, 'client_ip', None),
                 user_agent=getattr(request, 'user_agent', ''),
@@ -58,7 +63,7 @@ class SARASLoginView(TokenObtainPairView):
             user.last_login_at = timezone.now()
             user.save(update_fields=['last_login_at'])
             
-            logger.info(f"Login success: {email} from {request.client_ip}")
+            logger.info(f"Login success: {user.email} from {getattr(request, 'client_ip', None)}")
             
             # Wrap response
             return Response({
@@ -70,14 +75,14 @@ class SARASLoginView(TokenObtainPairView):
             # Login failed
             LoginAuditLog.objects.create(
                 user=None,
-                email_attempted=email,
+                email_attempted='unknown@saras.invalid',
                 event_type=LoginAuditLog.EventType.LOGIN_FAILURE,
                 ip_address=getattr(request, 'client_ip', None),
                 user_agent=getattr(request, 'user_agent', ''),
-                extra_data={'error': str(response.data)}
+                extra_data={'identifier_attempted': identifier, 'error': str(response.data)}
             )
             
-            logger.warning(f"Login failed: {email} from {request.client_ip}")
+            logger.warning(f"Login failed: {identifier} from {getattr(request, 'client_ip', None)}")
         
         return response
 
@@ -167,6 +172,30 @@ class PasswordChangeView(APIView):
         return Response({
             'success': True,
             'message': 'Password changed successfully. Please login again with your new password.'
+        })
+
+
+class PasswordResetRequestView(APIView):
+    """
+    POST /api/auth/password/reset-request/
+    Privacy-safe reset request endpoint. Always returns success-like response.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({
+                'success': False,
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        identifier = serializer.validated_data['identifier']
+        logger.info(f"Password reset requested for identifier={identifier}")
+
+        return Response({
+            'success': True,
+            'message': 'If an account exists for this identifier, a recovery link will be sent.'
         })
 
 

@@ -142,6 +142,8 @@ class BehavioralEvent(models.Model):
         FOCUS_GAINED = 'focus_gained', 'Focus Gained'
         RIGHT_CLICK_ATTEMPT = 'right_click_attempt', 'Right Click Attempt'
         KEYBOARD_SHORTCUT_BLOCKED = 'keyboard_shortcut_blocked', 'Keyboard Shortcut Blocked'
+        COPY_ATTEMPT = 'copy_attempt', 'Copy Attempt'
+        PRINT_ATTEMPT = 'print_attempt', 'Print Attempt'
 
     id = models.BigAutoField(primary_key=True)
     attempt = models.ForeignKey(TestAttempt, on_delete=models.CASCADE, related_name='behavioral_events')

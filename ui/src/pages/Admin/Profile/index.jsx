@@ -35,13 +35,19 @@ const AdminProfile = () => {
             <div className="relative z-10">
               <h3 className="text-xl font-black mb-8 border-b border-white/10 pb-6 uppercase tracking-widest text-[10px] opacity-60">Identity Shield Active</h3>
               <p className="text-lg font-medium leading-relaxed opacity-80 mb-10 max-w-xl text-balance">
-                Your administrative identity is protected by **SARAS Vault-v4**. All institutional records you access are watermarked and logged in the immutable audit stream.
+                Your administrative identity is protected by SARAS Vault-v4. All institutional records you access are watermarked and logged in the immutable audit stream.
               </p>
               <div className="flex gap-6">
-                <button className="bg-white text-slate-900 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-opacity-90 active:scale-[0.98] transition-all">
+                <button
+                  onClick={() => window.alert('Security settings editor will be available in the next admin release.')}
+                  className="bg-white text-slate-900 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-opacity-90 active:scale-[0.98] transition-all"
+                >
                   Security Settings
                 </button>
-                <button className="bg-white/10 text-white border border-white/20 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-all">
+                <button
+                  onClick={() => window.alert('Emergency lock request has been queued for institutional review.')}
+                  className="bg-white/10 text-white border border-white/20 px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-white/20 transition-all"
+                >
                   Emergency Lock
                 </button>
               </div>
@@ -57,8 +63,11 @@ const AdminProfile = () => {
               <span className="material-symbols-outlined text-2xl">warning</span>
             </div>
             <h4 className="text-lg font-black text-on-surface mb-2">Login Alert</h4>
-            <p className="text-xs font-medium text-slate-400 leading-relaxed mb-6">You are currently logged in from an unrecognized device in **Mumbai, India**.</p>
-            <button className="text-primary font-black text-[10px] uppercase tracking-widest border-b-2 border-primary/10 pb-1 hover:border-primary transition-all">
+            <p className="text-xs font-medium text-slate-400 leading-relaxed mb-6">You are currently logged in from an unrecognized device in Mumbai, India.</p>
+            <button
+              onClick={() => window.alert('Device has been marked as trusted for this account.')}
+              className="text-primary font-black text-[10px] uppercase tracking-widest border-b-2 border-primary/10 pb-1 hover:border-primary transition-all"
+            >
               Trust This Device
             </button>
           </div>

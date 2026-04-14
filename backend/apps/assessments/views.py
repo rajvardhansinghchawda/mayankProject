@@ -15,6 +15,7 @@ from .models import Test, TestQuestion, QuestionOption, TestAttempt, StudentAnsw
 from .serializers import (
     TestSerializer, TestListSerializer, TestQuestionSerializer, 
     StartTestResponseSerializer, StudentAnswerSaveSerializer,
+    TestAttemptListSerializer,
     TestAttemptTeacherSerializer, TestAttemptResultSerializer,
     BehavioralEventSerializer
 )
@@ -66,6 +67,11 @@ class TestViewSet(viewsets.ModelViewSet):
         return TestSerializer
 
     def perform_create(self, serializer):
+        from django.utils import timezone as tz
+        availability_start = serializer.validated_data.get('availability_start')
+        if availability_start and availability_start <= tz.now():
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({'availability_start': 'Start time must be in the future.'})
         serializer.save(created_by=self.request.user)
 
     @action(detail=True, methods=['post'])
@@ -325,6 +331,11 @@ class TestViewSet(viewsets.ModelViewSet):
                 else:
                     ans.is_correct = False
                     ans.marks_awarded = 0
+                ans.save()
+            elif ans.question.question_type == TestQuestion.QuestionType.SHORT_ANSWER:
+                # Short answer requires manual grading — mark is_correct as None (pending)
+                ans.is_correct = None
+                ans.marks_awarded = 0  # Will be updated by teacher grading
                 ans.save()
                 
         attempt.score = total_score

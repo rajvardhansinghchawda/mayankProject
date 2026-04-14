@@ -43,12 +43,30 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  const normalizeErrorMessage = (payload, fallback = 'Something went wrong') => {
+    if (!payload) return fallback;
+    if (typeof payload === 'string') return payload;
+    if (Array.isArray(payload)) return payload.map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).join(', ');
+    if (typeof payload === 'object') {
+      if (typeof payload.error === 'string') return payload.error;
+      if (typeof payload.detail === 'string') return payload.detail;
+      if (typeof payload.message === 'string') return payload.message;
+      try {
+        return JSON.stringify(payload);
+      } catch {
+        return fallback;
+      }
+    }
+    return String(payload);
+  };
+
   const login = async (identifier, password) => {
     setLoading(true);
     setError(null);
     try {
       const response = await api.post('/auth/login/', {
-        email: identifier, // Corrected to 'email' to match backend USERNAME_FIELD
+        identifier,
+        email: identifier,
         password: password
       });
       
@@ -66,8 +84,11 @@ export const AuthProvider = ({ children }) => {
       return userData;
     } catch (err) {
       console.error('Login failed', err);
-      // Backend returns errors in 'error' or 'detail' field
-      const errorMessage = err.response?.data?.error || err.response?.data?.detail || 'Invalid credentials';
+      const errorPayload = err.response?.data;
+      const errorMessage = normalizeErrorMessage(
+        errorPayload?.error || errorPayload?.detail || errorPayload?.errors || errorPayload,
+        'Invalid credentials'
+      );
       setError(errorMessage);
       throw err;
     } finally {
@@ -75,20 +96,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     const refreshToken = localStorage.getItem('refreshToken');
-    
-    // Clear local state first for immediate UI responsiveness
+
+    // Call backend to blacklist the refresh token if it exists
+    if (refreshToken) {
+      try {
+        await api.post('/auth/logout/', {
+         refresh_token: refreshToken
+        });
+      } catch (err) {
+        console.error('Failed to blacklist token', err);
+      }
+    }
+
+    // Clear local state regardless of backend outcome
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     setUser(null);
-    
-    // Call backend to blacklist the refresh token if it exists
-    if (refreshToken) {
-      api.post('/auth/logout/', {
-         refresh_token: refreshToken
-      }).catch(err => console.error("Failed to blacklist token", err));
-    }
   };
 
   const value = {

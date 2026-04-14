@@ -33,7 +33,13 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     
     // If we have a 401 error and it's NOT a login request and we haven't already retried
-    if (error.response && error.response.status === 401 && !originalRequest.url.includes('/auth/login/') && !originalRequest._retry) {
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      !originalRequest.url.includes('/auth/login/') &&
+      !originalRequest.url.includes('/auth/logout/') &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
       
       try {

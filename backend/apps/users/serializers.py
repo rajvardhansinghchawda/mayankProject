@@ -8,7 +8,9 @@ from .models import User, StudentProfile, TeacherProfile, Institution, Departmen
 class InstitutionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Institution
-        fields = ['id', 'name', 'short_name', 'website', 'logo_url']
+        fields = ['id', 'name', 'short_name', 'address', 'website', 'logo_url',
+                  'watermark_opacity', 'document_serve_token_expiry_minutes',
+                  'max_tab_switches_before_warning', 'auto_submit_on_fullscreen_exit']
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
