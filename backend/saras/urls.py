@@ -6,12 +6,31 @@ from django.urls import path, include
 from django.http import JsonResponse
 
 
+from django.db import connection
+
 def health_check(request):
-    return JsonResponse({'status': 'ok', 'service': 'SARAS Django API', 'version': '1.0.0'})
+    """
+    Enhanced health check that pings the database.
+    This prevents Supabase from pausing the project due to inactivity.
+    """
+    db_status = "ok"
+    try:
+        # Perform a simple query to keep the connection alive
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception as e:
+        db_status = f"error: {str(e)}"
+
+    return JsonResponse({
+        'status': 'ok' if db_status == "ok" else "degraded",
+        'database': db_status,
+        'service': 'SARAS Django API',
+        'version': '1.0.0'
+    })
 
 
 urlpatterns = [
-    # Health check
+    # Health check (Ping this URL to keep database alive)
     path('health/', health_check),
 
     # Django admin (restrict in production)
